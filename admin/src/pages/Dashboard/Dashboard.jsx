@@ -71,8 +71,27 @@ const Dashboard = () => {
   };
 
   const setupSocket = () => {
-    const socket = io(API_URL.replace('/api', ''));
-    socket.emit('join:admin');
+    const socketUrl = API_URL.replace('/api', '');
+    const socket = io(socketUrl, {
+      transports: ['websocket', 'polling'], // Allow both transports
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 5,
+      timeout: 20000
+    });
+    
+    socket.on('connect', () => {
+      console.log('Socket connected:', socket.id);
+      socket.emit('join:admin');
+    });
+
+    socket.on('disconnect', () => {
+      console.log('Socket disconnected');
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error);
+    });
 
     socket.on('order:new', () => {
       fetchStats();
