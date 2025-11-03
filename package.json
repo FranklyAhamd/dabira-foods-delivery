@@ -1,0 +1,11 @@
+{
+  "name": "dabira-foods",
+  "version": "1.0.0",
+  "description": "Dabira Foods Delivery System",
+  "scripts": {
+    "dev": "node start-all.js",
+    "backend": "cd backend && npm start",
+    "admin": "cd admin && npm start",
+    "customer": "cd mobile && npm start"
+  }
+}

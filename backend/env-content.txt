@@ -1,0 +1,11 @@
+DATABASE_URL="postgresql://neondb_owner:npg_HNgbsTdcGx53@ep-jolly-firefly-adyxju65-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require"
+JWT_SECRET="dabira-foods-secret-key-2024"
+PORT=5000
+NODE_ENV=development
+ADMIN_APP_URL=http://localhost:3000
+MOBILE_APP_URL=http://localhost:3001
+
+
+
+
+

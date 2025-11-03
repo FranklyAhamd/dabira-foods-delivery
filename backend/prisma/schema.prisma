@@ -1,0 +1,103 @@
+// Prisma schema for Dabira Foods
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  phone     String?
+  role      UserRole @default(CUSTOMER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orders    Order[]
+}
+
+enum UserRole {
+  CUSTOMER
+  ADMIN
+  MANAGER
+}
+
+model MenuItem {
+  id          String      @id @default(uuid())
+  name        String
+  description String
+  price       Float
+  category    String
+  image       String?
+  available   Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  orderItems  OrderItem[]
+}
+
+model Order {
+  id                String      @id @default(uuid())
+  userId            String?
+  user              User?       @relation(fields: [userId], references: [id])
+  status            OrderStatus @default(PENDING)
+  totalAmount       Float
+  paymentStatus     PaymentStatus @default(PENDING)
+  paymentReference  String?
+  deliveryAddress   String
+  customerName      String
+  customerPhone     String
+  notes             String?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  items             OrderItem[]
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+model OrderItem {
+  id         String   @id @default(uuid())
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItemId String
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+  quantity   Int
+  price      Float
+  createdAt  DateTime @default(now())
+}
+
+model Settings {
+  id                  String   @id @default(uuid())
+  restaurantName      String   @default("Dabira Foods")
+  restaurantAddress   String?
+  restaurantPhone     String?
+  restaurantEmail     String?
+  paystackPublicKey   String?
+  paystackSecretKey   String?
+  deliveryFee         Float    @default(0)
+  minimumOrder        Float    @default(0)
+  openingTime         String?
+  closingTime         String?
+  isDeliveryOpen      Boolean  @default(true)
+  closedMessage       String?  @default("Delivery is closed for today. Please check back during operating hours.")
+  updatedAt           DateTime @updatedAt
+}
+

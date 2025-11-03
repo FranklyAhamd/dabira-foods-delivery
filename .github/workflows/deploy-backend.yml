@@ -1,0 +1,43 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install dependencies
+        run: |
+          cd backend
+          npm ci
+      
+      - name: Generate Prisma Client
+        run: |
+          cd backend
+          npm run prisma:generate
+      
+      - name: Run migrations
+        run: |
+          cd backend
+          npm run prisma:migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      
+      # Add your deployment step here (Railway, Heroku, etc.)
+      # Example for Railway:
+      # - name: Deploy to Railway
+      #   run: |
+      #     railway up
+
