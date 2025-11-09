@@ -58,7 +58,7 @@ const Settings = () => {
           closingTime: settings.closingTime || ''
         });
         setIsDeliveryOpen(settings.isDeliveryOpen !== false);
-        setClosedMessage(settings.closedMessage || closedMessage);
+        setClosedMessage(settings.closedMessage || 'Delivery is closed for today. Please check back during operating hours.');
       }
     } catch (error) {
       setMessage({ type: 'error', text: 'Error loading settings' });

@@ -104,8 +104,7 @@ const Dashboard = () => {
     fetchStats();
     fetchRecentOrders();
     return setupSocket();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [setupSocket]);
 
   const getStatusColor = (status) => {
     switch (status) {
