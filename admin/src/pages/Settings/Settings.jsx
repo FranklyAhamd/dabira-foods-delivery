@@ -6,6 +6,7 @@ import {
   Form,
   Section,
   SectionTitle,
+  FormGrid,
   FormGroup,
   Label,
   Input,
@@ -16,7 +17,8 @@ import {
   SuccessMessage,
   ErrorMessage,
   LoadingContainer,
-  LoadingSpinner
+  LoadingSpinner,
+  StatusBadge
 } from './SettingsStyles';
 
 const Settings = () => {
@@ -127,16 +129,34 @@ const Settings = () => {
       <Form onSubmit={handleSubmit}>
         <Section>
           <SectionTitle>Restaurant Information</SectionTitle>
-          
-          <FormGroup>
-            <Label>Restaurant Name</Label>
-            <Input
-              type="text"
-              value={formData.restaurantName}
-              onChange={(e) => setFormData({ ...formData, restaurantName: e.target.value })}
-            />
-          </FormGroup>
+          <FormGrid>
+            <FormGroup>
+              <Label>Restaurant Name</Label>
+              <Input
+                type="text"
+                value={formData.restaurantName}
+                onChange={(e) => setFormData({ ...formData, restaurantName: e.target.value })}
+              />
+            </FormGroup>
 
+            <FormGroup>
+              <Label>Phone Number</Label>
+              <Input
+                type="tel"
+                value={formData.restaurantPhone}
+                onChange={(e) => setFormData({ ...formData, restaurantPhone: e.target.value })}
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <Label>Email</Label>
+              <Input
+                type="email"
+                value={formData.restaurantEmail}
+                onChange={(e) => setFormData({ ...formData, restaurantEmail: e.target.value })}
+              />
+            </FormGroup>
+          </FormGrid>
           <FormGroup>
             <Label>Address</Label>
             <TextArea
@@ -145,123 +165,108 @@ const Settings = () => {
               rows={2}
             />
           </FormGroup>
-
-          <FormGroup>
-            <Label>Phone Number</Label>
-            <Input
-              type="tel"
-              value={formData.restaurantPhone}
-              onChange={(e) => setFormData({ ...formData, restaurantPhone: e.target.value })}
-            />
-          </FormGroup>
-
-          <FormGroup>
-            <Label>Email</Label>
-            <Input
-              type="email"
-              value={formData.restaurantEmail}
-              onChange={(e) => setFormData({ ...formData, restaurantEmail: e.target.value })}
-            />
-          </FormGroup>
         </Section>
 
         <Section>
           <SectionTitle>Paystack Configuration</SectionTitle>
-          
-          <FormGroup>
-            <Label>Paystack Public Key</Label>
-            <Input
-              type="text"
-              value={formData.paystackPublicKey}
-              onChange={(e) => setFormData({ ...formData, paystackPublicKey: e.target.value })}
-              placeholder="pk_test_..."
-            />
-          </FormGroup>
+          <FormGrid>
+            <FormGroup>
+              <Label>Paystack Public Key</Label>
+              <Input
+                type="text"
+                value={formData.paystackPublicKey}
+                onChange={(e) => setFormData({ ...formData, paystackPublicKey: e.target.value })}
+                placeholder="pk_test_..."
+              />
+            </FormGroup>
 
-          <FormGroup>
-            <Label>Paystack Secret Key</Label>
-            <Input
-              type="password"
-              value={formData.paystackSecretKey}
-              onChange={(e) => setFormData({ ...formData, paystackSecretKey: e.target.value })}
-              placeholder="sk_test_..."
-            />
-          </FormGroup>
+            <FormGroup>
+              <Label>Paystack Secret Key</Label>
+              <Input
+                type="password"
+                value={formData.paystackSecretKey}
+                onChange={(e) => setFormData({ ...formData, paystackSecretKey: e.target.value })}
+                placeholder="sk_test_..."
+              />
+            </FormGroup>
+          </FormGrid>
         </Section>
 
         <Section>
           <SectionTitle>Delivery Settings</SectionTitle>
-          
-          <FormGroup>
-            <Label>Delivery Fee (₦)</Label>
-            <Input
-              type="number"
-              step="0.01"
-              value={formData.deliveryFee}
-              onChange={(e) => setFormData({ ...formData, deliveryFee: e.target.value })}
-            />
-          </FormGroup>
+          <FormGrid>
+            <FormGroup>
+              <Label>Delivery Fee (₦)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={formData.deliveryFee}
+                onChange={(e) => setFormData({ ...formData, deliveryFee: e.target.value })}
+              />
+            </FormGroup>
 
-          <FormGroup>
-            <Label>Minimum Order (₦)</Label>
-            <Input
-              type="number"
-              step="0.01"
-              value={formData.minimumOrder}
-              onChange={(e) => setFormData({ ...formData, minimumOrder: e.target.value })}
-            />
-          </FormGroup>
+            <FormGroup>
+              <Label>Minimum Order (₦)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={formData.minimumOrder}
+                onChange={(e) => setFormData({ ...formData, minimumOrder: e.target.value })}
+              />
+            </FormGroup>
+          </FormGrid>
         </Section>
 
         <Section>
           <SectionTitle>Operating Hours</SectionTitle>
-          
-          <FormGroup>
-            <Label>Opening Time</Label>
-            <Input
-              type="time"
-              value={formData.openingTime}
-              onChange={(e) => setFormData({ ...formData, openingTime: e.target.value })}
-            />
-          </FormGroup>
+          <FormGrid>
+            <FormGroup>
+              <Label>Opening Time</Label>
+              <Input
+                type="time"
+                value={formData.openingTime}
+                onChange={(e) => setFormData({ ...formData, openingTime: e.target.value })}
+              />
+            </FormGroup>
 
-          <FormGroup>
-            <Label>Closing Time</Label>
-            <Input
-              type="time"
-              value={formData.closingTime}
-              onChange={(e) => setFormData({ ...formData, closingTime: e.target.value })}
-            />
-          </FormGroup>
+            <FormGroup>
+              <Label>Closing Time</Label>
+              <Input
+                type="time"
+                value={formData.closingTime}
+                onChange={(e) => setFormData({ ...formData, closingTime: e.target.value })}
+              />
+            </FormGroup>
+          </FormGrid>
         </Section>
 
         <Section>
           <SectionTitle>Delivery Control</SectionTitle>
-
+          <FormGrid>
+            <FormGroup>
+              <Label>Status</Label>
+              <div style={{ display: 'flex', alignItems: 'center', height: '22px' }}>
+                <StatusBadge $isOpen={isDeliveryOpen}>
+                  {isDeliveryOpen ? 'Open' : 'Closed'}
+                </StatusBadge>
+              </div>
+            </FormGroup>
+          </FormGrid>
           <FormGroup>
-            <Label>Status</Label>
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <span style={{ fontWeight: 700, color: isDeliveryOpen ? '#10b981' : '#ef4444' }}>
-                {isDeliveryOpen ? 'Open' : 'Closed'}
-              </span>
-            </div>
-          </FormGroup>
-
-          <FormGroup>
-            <Label>Closed Message (shown to customers)</Label>
+            <Label>Closed Message</Label>
             <TextArea
               rows={2}
               value={closedMessage}
               onChange={(e) => setClosedMessage(e.target.value)}
+              placeholder="Message shown to customers when delivery is closed"
             />
           </FormGroup>
-
           <ButtonGroup>
             <SaveButton type="button" onClick={() => handleToggleDelivery(true)}>
-              Start Delivery (Open)
+              Open Delivery
             </SaveButton>
             <CancelButton type="button" onClick={() => handleToggleDelivery(false)}>
-              End Delivery (Close)
+              Close Delivery
             </CancelButton>
           </ButtonGroup>
         </Section>

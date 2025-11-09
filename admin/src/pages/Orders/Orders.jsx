@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import api, { API_URL } from '../../config/api';
+import { useToast } from '../../context/ToastContext';
 import {
   Container,
   PageTitle,
@@ -15,7 +16,6 @@ import {
   EmptyMessage,
   LoadingContainer,
   LoadingSpinner,
-  OrderDetailsModal,
   ModalOverlay,
   ModalContent,
   ModalHeader,
@@ -30,6 +30,7 @@ import {
 } from './OrdersStyles';
 
 const Orders = () => {
+  const { error } = useToast();
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -53,8 +54,8 @@ const Orders = () => {
       if (response.success) {
         setOrders(response.data.orders);
       }
-    } catch (error) {
-      alert('Error fetching orders');
+    } catch (err) {
+      error('Error fetching orders');
     } finally {
       setLoading(false);
     }
@@ -115,8 +116,8 @@ const Orders = () => {
           order.id === orderId ? { ...order, status: newStatus } : order
         ));
       }
-    } catch (error) {
-      alert('Error updating order status');
+    } catch (err) {
+      error('Error updating order status');
     }
   };
 
@@ -141,7 +142,15 @@ const Orders = () => {
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    
+    if (isToday) {
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' + 
+           date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   if (loading) {
@@ -189,7 +198,7 @@ const Orders = () => {
               <TableRow key={order.id}>
                 <TableCell
                   onClick={() => setSelectedOrder(order)}
-                  style={{ cursor: 'pointer', color: '#2196F3' }}
+                  style={{ cursor: 'pointer', color: '#2563eb', fontWeight: '500' }}
                 >
                   #{order.id.slice(0, 8)}
                 </TableCell>
@@ -252,8 +261,10 @@ const Orders = () => {
               </DetailRow>
               <DetailRow>
                 <DetailLabel>Payment Status:</DetailLabel>
-                <DetailValue style={{ color: selectedOrder.paymentStatus === 'PAID' ? '#4CAF50' : '#FFA500' }}>
-                  {selectedOrder.paymentStatus}
+                <DetailValue>
+                  <StatusBadge color={selectedOrder.paymentStatus === 'PAID' ? '#10b981' : selectedOrder.paymentStatus === 'FAILED' ? '#ef4444' : '#f59e0b'}>
+                    {selectedOrder.paymentStatus}
+                  </StatusBadge>
                 </DetailValue>
               </DetailRow>
             </DetailSection>
@@ -291,9 +302,9 @@ const Orders = () => {
                   </ItemRow>
                 ))}
               </ItemsList>
-              <DetailRow style={{ marginTop: '15px', paddingTop: '15px', borderTop: '2px solid #e0e0e0' }}>
-                <DetailLabel style={{ fontSize: '18px', fontWeight: 'bold' }}>Total:</DetailLabel>
-                <DetailValue style={{ fontSize: '20px', fontWeight: 'bold', color: '#FF6B35' }}>
+              <DetailRow style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #e5e7eb' }}>
+                <DetailLabel style={{ fontSize: '11px', fontWeight: '600' }}>Total:</DetailLabel>
+                <DetailValue style={{ fontSize: '13px', fontWeight: '700', color: '#FF6B35' }}>
                   ₦{selectedOrder.totalAmount.toFixed(2)}
                 </DetailValue>
               </DetailRow>

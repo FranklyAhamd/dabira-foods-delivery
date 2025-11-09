@@ -6,121 +6,146 @@ const spin = keyframes`
 `;
 
 export const Container = styled.div`
-  padding: 30px;
+  padding: 16px;
   overflow-y: auto;
   height: calc(100vh - 80px);
+  background: #f8f9fa;
 `;
 
 export const PageTitle = styled.h1`
-  font-size: 28px;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 30px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 12px;
 `;
 
 export const StatsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
-  margin-bottom: 40px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
 `;
 
 export const StatCard = styled.div`
   background: white;
-  padding: 25px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 10px 12px;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   display: flex;
   align-items: center;
-  gap: 20px;
-  transition: transform 0.3s, box-shadow 0.3s;
+  gap: 10px;
+  transition: all 0.15s;
+  border: 1px solid #e5e7eb;
 
   &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
   }
 `;
 
 export const StatIcon = styled.div`
-  font-size: 48px;
+  font-size: 20px;
+  color: #FF6B35;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;
 
 export const StatInfo = styled.div`
   display: flex;
   flex-direction: column;
+  flex: 1;
 `;
 
 export const StatValue = styled.div`
-  font-size: 32px;
-  font-weight: bold;
-  color: #333;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a1a;
+  line-height: 1.2;
 `;
 
 export const StatLabel = styled.div`
-  font-size: 14px;
-  color: #666;
-  margin-top: 5px;
+  font-size: 10px;
+  color: #6b7280;
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 `;
 
 export const Section = styled.div`
   background: white;
-  padding: 25px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  margin-bottom: 30px;
+  padding: 12px;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  margin-bottom: 12px;
+  border: 1px solid #e5e7eb;
 `;
 
 export const SectionTitle = styled.h2`
-  font-size: 22px;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #e5e7eb;
 `;
 
 export const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
+  font-size: 11px;
 `;
 
 export const TableHeader = styled.th`
   text-align: left;
-  padding: 12px;
-  border-bottom: 2px solid #f0f0f0;
-  font-size: 14px;
+  padding: 6px 8px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 10px;
   font-weight: 600;
-  color: #666;
+  color: #6b7280;
   text-transform: uppercase;
+  letter-spacing: 0.3px;
+  height: 22px;
+  background-color: #f9fafb;
 `;
 
 export const TableRow = styled.tr`
   &:hover {
-    background-color: #f9f9f9;
+    background-color: #f9fafb;
+  }
+  
+  &:last-child td {
+    border-bottom: none;
   }
 `;
 
 export const TableCell = styled.td`
-  padding: 15px 12px;
-  border-bottom: 1px solid #f0f0f0;
-  font-size: 14px;
-  color: #333;
+  padding: 4px 8px;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 11px;
+  color: #374151;
+  height: 22px;
+  vertical-align: middle;
 `;
 
 export const StatusBadge = styled.span`
   display: inline-block;
-  padding: 6px 12px;
-  border-radius: 6px;
-  background-color: ${props => props.color || '#999'};
+  padding: 2px 6px;
+  border-radius: 3px;
+  background-color: ${props => props.color || '#9ca3af'};
   color: white;
-  font-size: 12px;
-  font-weight: bold;
+  font-size: 9px;
+  font-weight: 600;
   text-transform: uppercase;
+  letter-spacing: 0.2px;
 `;
 
 export const EmptyMessage = styled.div`
   text-align: center;
-  padding: 40px;
-  color: #999;
-  font-size: 16px;
+  padding: 16px;
+  color: #9ca3af;
+  font-size: 11px;
 `;
 
 export const LoadingContainer = styled.div`
@@ -131,35 +156,39 @@ export const LoadingContainer = styled.div`
 `;
 
 export const LoadingSpinner = styled.div`
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #FF6B35;
+  border: 3px solid #f3f4f6;
+  border-top: 3px solid #FF6B35;
   border-radius: 50%;
-  width: 50px;
-  height: 50px;
+  width: 32px;
+  height: 32px;
   animation: ${spin} 1s linear infinite;
 `;
 
 export const PopularItemCard = styled.div`
-  background-color: #f9f9f9;
-  padding: 20px;
-  border-radius: 10px;
-  border-left: 4px solid #FF6B35;
+  background-color: #f9fafb;
+  padding: 8px 10px;
+  border-radius: 4px;
+  border-left: 3px solid #FF6B35;
+  border: 1px solid #e5e7eb;
 `;
 
 export const ItemName = styled.div`
-  font-size: 18px;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 4px;
 `;
 
 export const ItemStats = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  font-size: 14px;
-  color: #666;
+  gap: 2px;
+  font-size: 9px;
+  color: #6b7280;
 `;
+
+
+
 
 
 

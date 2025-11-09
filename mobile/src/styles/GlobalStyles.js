@@ -8,7 +8,7 @@ const GlobalStyles = createGlobalStyle`
   }
 
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
       'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -16,6 +16,13 @@ const GlobalStyles = createGlobalStyle`
     color: #1a1a1a;
     overflow-x: hidden;
     line-height: 1.6;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.3;
   }
 
   html, body, #root {
@@ -26,18 +33,21 @@ const GlobalStyles = createGlobalStyle`
   a {
     text-decoration: none;
     color: inherit;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   }
 
   button {
-    font-family: inherit;
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    font-weight: 600;
     cursor: pointer;
     border: none;
     outline: none;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    letter-spacing: -0.01em;
   }
 
   input, textarea, select {
-    font-family: inherit;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
     outline: none;
   }
 

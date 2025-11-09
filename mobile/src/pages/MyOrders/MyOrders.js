@@ -211,7 +211,9 @@ const OrderFooter = styled.div`
 const OrderTotal = styled.span`
   font-size: 1.25rem;
   font-weight: 700;
+  font-family: 'Space Grotesk', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   color: #FF6B35;
+  letter-spacing: 0.02em;
 `;
 
 const ViewDetails = styled.span`

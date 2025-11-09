@@ -6,22 +6,59 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Starting database seed...');
 
-  // Create admin user
-  console.log('Creating admin user...');
-  const hashedPassword = await bcrypt.hash('admin123', 10);
+  // Create/Update admin user
+  console.log('Creating/updating admin user...');
+  const hashedPassword = await bcrypt.hash('dabira', 10);
   
+  // Check if old admin exists
+  const oldAdmin = await prisma.user.findUnique({
+    where: { email: 'admin@dabirafood.com' }
+  });
+  
+  const newAdmin = await prisma.user.findUnique({
+    where: { email: 'agidioja@gmail.com' }
+  });
+  
+  if (oldAdmin && !newAdmin) {
+    // Update old admin to new email and password
+    await prisma.user.update({
+      where: { email: 'admin@dabirafood.com' },
+      data: {
+        email: 'agidioja@gmail.com',
+        password: hashedPassword,
+        name: 'Admin User',
+        role: 'ADMIN'
+      }
+    });
+    console.log('✅ Old admin updated to new credentials');
+  } else if (oldAdmin && newAdmin) {
+    // Both exist, just update the old one's password in case it's different
+    await prisma.user.update({
+      where: { email: 'admin@dabirafood.com' },
+      data: {
+        password: hashedPassword
+      }
+    });
+    console.log('✅ Old admin password updated (keeping both for now)');
+  }
+  
+  // Create or update new admin user
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@dabirafood.com' },
-    update: {},
+    where: { email: 'agidioja@gmail.com' },
+    update: {
+      password: hashedPassword,
+      name: 'Admin User',
+      role: 'ADMIN'
+    },
     create: {
-      email: 'admin@dabirafood.com',
+      email: 'agidioja@gmail.com',
       password: hashedPassword,
       name: 'Admin User',
       role: 'ADMIN',
       phone: '+234 123 456 7890'
     }
   });
-  console.log('✅ Admin user created');
+  console.log('✅ Admin user ready');
 
   // Create sample customer
   console.log('Creating sample customer...');
@@ -166,15 +203,26 @@ async function main() {
   ];
 
   let createdCount = 0;
+  let updatedCount = 0;
   for (const item of menuItems) {
-    await prisma.menuItem.upsert({
-      where: { name: item.name },
-      update: {},
-      create: item
+    const existing = await prisma.menuItem.findFirst({
+      where: { name: item.name }
     });
-    createdCount++;
+    
+    if (existing) {
+      await prisma.menuItem.update({
+        where: { id: existing.id },
+        data: item
+      });
+      updatedCount++;
+    } else {
+      await prisma.menuItem.create({
+        data: item
+      });
+      createdCount++;
+    }
   }
-  console.log(`✅ ${createdCount} menu items created`);
+  console.log(`✅ ${createdCount} menu items created, ${updatedCount} updated`);
 
   // Create settings
   console.log('Creating settings...');
@@ -198,8 +246,8 @@ async function main() {
   console.log('\n🎉 Database seeded successfully!\n');
   console.log('═══════════════════════════════════════');
   console.log('Admin Login Credentials:');
-  console.log('  Email: admin@dabirafood.com');
-  console.log('  Password: admin123');
+  console.log('  Email: agidioja@gmail.com');
+  console.log('  Password: dabira');
   console.log('');
   console.log('Customer Login Credentials:');
   console.log('  Email: customer@example.com');
@@ -215,6 +263,9 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+
+
+
 
 
 

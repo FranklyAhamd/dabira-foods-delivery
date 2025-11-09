@@ -230,7 +230,7 @@ const Dashboard = () => {
       <Section>
         <SectionTitle>Popular Items</SectionTitle>
         {stats?.popularItems && stats.popularItems.length > 0 ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '15px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '8px' }}>
             {stats.popularItems.map((item) => (
               <PopularItemCard key={item.id}>
                 <ItemName>{item.name}</ItemName>

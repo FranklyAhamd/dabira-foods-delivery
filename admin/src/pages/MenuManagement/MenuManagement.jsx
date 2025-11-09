@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { FiEdit, FiTrash2, FiPlus } from 'react-icons/fi';
 import api from '../../config/api';
+import { useToast } from '../../context/ToastContext';
+import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
 import {
   Container,
-  PageTitle,
-  Header,
-  AddButton,
   Table,
   TableHeader,
   TableRow,
   TableCell,
   ActionButton,
-  Modal,
   ModalOverlay,
   ModalContent,
   ModalHeader,
@@ -28,17 +27,20 @@ import {
   EmptyMessage,
   LoadingContainer,
   LoadingSpinner,
-  AvailableBadge
+  AvailableBadge,
+  FloatingAddButton
 } from './MenuManagementStyles';
 
 const MenuManagement = () => {
+  const { success, error } = useToast();
   const [menuItems, setMenuItems] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, item: null });
   const [formData, setFormData] = useState({
     name: '',
-    description: '',
     price: '',
     category: '',
     image: '',
@@ -47,6 +49,7 @@ const MenuManagement = () => {
 
   useEffect(() => {
     fetchMenuItems();
+    fetchCategories();
   }, []);
 
   const fetchMenuItems = async () => {
@@ -55,10 +58,21 @@ const MenuManagement = () => {
       if (response.success) {
         setMenuItems(response.data.menuItems);
       }
-    } catch (error) {
-      alert('Error fetching menu items');
+    } catch (err) {
+      error('Error fetching menu items');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const response = await api.get('/menu/categories');
+      if (response.success) {
+        setCategories(response.data.categories || []);
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error);
     }
   };
 
@@ -67,7 +81,6 @@ const MenuManagement = () => {
       setEditingItem(item);
       setFormData({
         name: item.name,
-        description: item.description,
         price: item.price,
         category: item.category,
         image: item.image || '',
@@ -77,7 +90,6 @@ const MenuManagement = () => {
       setEditingItem(null);
       setFormData({
         name: '',
-        description: '',
         price: '',
         category: '',
         image: '',
@@ -85,6 +97,8 @@ const MenuManagement = () => {
       });
     }
     setShowModal(true);
+    // Refresh categories when opening modal to get latest categories
+    fetchCategories();
   };
 
   const handleCloseModal = () => {
@@ -99,34 +113,53 @@ const MenuManagement = () => {
       if (editingItem) {
         const response = await api.put(`/menu/${editingItem.id}`, formData);
         if (response.success) {
-          alert('Menu item updated successfully');
+          success('Menu item updated successfully');
           fetchMenuItems();
           handleCloseModal();
         }
       } else {
         const response = await api.post('/menu', formData);
         if (response.success) {
-          alert('Menu item created successfully');
+          success('Menu item created successfully');
           fetchMenuItems();
           handleCloseModal();
         }
       }
-    } catch (error) {
-      alert(error.response?.data?.message || 'Error saving menu item');
+    } catch (err) {
+      error(err.response?.data?.message || 'Error saving menu item');
     }
   };
 
-  const handleDelete = async (id, name) => {
-    if (window.confirm(`Are you sure you want to delete "${name}"?`)) {
-      try {
-        const response = await api.delete(`/menu/${id}`);
-        if (response.success) {
-          alert('Menu item deleted successfully');
-          fetchMenuItems();
-        }
-      } catch (error) {
-        alert('Error deleting menu item');
+  const handleDeleteClick = (id, name) => {
+    setDeleteConfirm({ isOpen: true, item: { id, name } });
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteConfirm.item) return;
+    
+    try {
+      const response = await api.delete(`/menu/${deleteConfirm.item.id}`);
+      if (response.success) {
+        success('Menu item deleted successfully');
+        fetchMenuItems();
       }
+    } catch (err) {
+      error('Error deleting menu item');
+    } finally {
+      setDeleteConfirm({ isOpen: false, item: null });
+    }
+  };
+
+  const handleToggleAvailability = async (item) => {
+    try {
+      const response = await api.put(`/menu/${item.id}`, {
+        available: !item.available
+      });
+      if (response.success) {
+        fetchMenuItems();
+      }
+    } catch (err) {
+      error('Error updating availability');
     }
   };
 
@@ -142,11 +175,6 @@ const MenuManagement = () => {
 
   return (
     <Container>
-      <Header>
-        <PageTitle>Menu Management</PageTitle>
-        <AddButton onClick={() => handleOpenModal()}>+ Add New Item</AddButton>
-      </Header>
-
       {menuItems.length > 0 ? (
         <Table>
           <thead>
@@ -165,16 +193,20 @@ const MenuManagement = () => {
                 <TableCell>{item.category}</TableCell>
                 <TableCell>₦{item.price.toFixed(2)}</TableCell>
                 <TableCell>
-                  <AvailableBadge $available={item.available}>
+                  <AvailableBadge 
+                    as="button"
+                    $available={item.available}
+                    onClick={() => handleToggleAvailability(item)}
+                  >
                     {item.available ? 'Available' : 'Unavailable'}
                   </AvailableBadge>
                 </TableCell>
                 <TableCell>
                   <ActionButton onClick={() => handleOpenModal(item)} $edit>
-                    Edit
+                    <FiEdit />
                   </ActionButton>
-                  <ActionButton onClick={() => handleDelete(item.id, item.name)}>
-                    Delete
+                  <ActionButton onClick={() => handleDeleteClick(item.id, item.name)}>
+                    <FiTrash2 />
                   </ActionButton>
                 </TableCell>
               </TableRow>
@@ -207,24 +239,29 @@ const MenuManagement = () => {
               </FormGroup>
 
               <FormGroup>
-                <Label>Description *</Label>
-                <TextArea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={3}
-                  required
-                />
-              </FormGroup>
-
-              <FormGroup>
                 <Label>Category *</Label>
-                <Input
-                  type="text"
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  placeholder="e.g., Burgers, Pizza, Drinks"
-                  required
-                />
+                {categories.length > 0 ? (
+                  <Select
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    required
+                  >
+                    <option value="">Select a category</option>
+                    {categories.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </Select>
+                ) : (
+                  <Input
+                    type="text"
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    placeholder="Enter category (e.g., Burgers, Pizza, Drinks)"
+                    required
+                  />
+                )}
               </FormGroup>
 
               <FormGroup>
@@ -271,6 +308,20 @@ const MenuManagement = () => {
           </ModalContent>
         </ModalOverlay>
       )}
+
+      <FloatingAddButton onClick={() => handleOpenModal()}>
+        <FiPlus size={24} />
+      </FloatingAddButton>
+
+      <ConfirmModal
+        isOpen={deleteConfirm.isOpen}
+        onClose={() => setDeleteConfirm({ isOpen: false, item: null })}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Menu Item"
+        message={deleteConfirm.item ? `Are you sure you want to delete "${deleteConfirm.item.name}"? This action cannot be undone.` : ''}
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
     </Container>
   );
 };

@@ -270,7 +270,9 @@ const ItemName = styled.span`
 const ItemPrice = styled.span`
   font-size: 0.875rem;
   font-weight: 600;
+  font-family: 'Space Grotesk', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   color: #333;
+  letter-spacing: 0.01em;
 `;
 
 const Divider = styled.div`
@@ -294,7 +296,9 @@ const TotalLabel = styled.span`
 const TotalValue = styled.span`
   font-size: 1.5rem;
   font-weight: 700;
+  font-family: 'Space Grotesk', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   color: #FF6B35;
+  letter-spacing: 0.02em;
 `;
 
 const LoadingContainer = styled.div`

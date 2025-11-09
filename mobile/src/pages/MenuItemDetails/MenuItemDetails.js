@@ -4,11 +4,13 @@ import styled from 'styled-components';
 import io from 'socket.io-client';
 import api, { API_URL } from '../../config/api';
 import { useCart } from '../../context/CartContext';
+import { useToast } from '../../context/ToastContext';
 
 const MenuItemDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { warning } = useToast();
   
   const [item, setItem] = useState(null);
   const [quantity, setQuantity] = useState(1);
@@ -67,7 +69,7 @@ const MenuItemDetails = () => {
 
   const handleAddToCart = () => {
     if (!isDeliveryOpen) {
-      alert(closedMessage || 'Delivery is currently closed. Please check back during operating hours.');
+      warning(closedMessage || 'Delivery is currently closed. Please check back during operating hours.');
       return;
     }
     addToCart(item, quantity);
@@ -194,8 +196,10 @@ const Description = styled.p`
 const Price = styled.div`
   font-size: 2rem;
   font-weight: 700;
+  font-family: 'Space Grotesk', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   color: #FF6B35;
   margin-bottom: 1.5rem;
+  letter-spacing: 0.02em;
 `;
 
 const QuantitySection = styled.div`
@@ -264,7 +268,9 @@ const TotalLabel = styled.span`
 const TotalValue = styled.span`
   font-size: 1.5rem;
   font-weight: 700;
+  font-family: 'Space Grotesk', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   color: #FF6B35;
+  letter-spacing: 0.02em;
 `;
 
 const ClosedWarning = styled.div`

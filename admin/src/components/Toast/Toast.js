@@ -29,10 +29,6 @@ const ToastContainer = styled.div`
   max-width: 400px;
   animation: ${props => props.$isExiting ? slideOut : slideIn} 0.3s ease-out;
   margin-bottom: 10px;
-  
-  @media (max-width: 768px) {
-    max-width: calc(100vw - 20px);
-  }
 `;
 
 const Toast = styled.div`
@@ -179,7 +175,4 @@ const ToastComponent = ({ message, type = 'info', onClose, duration = 5000 }) =>
 };
 
 export default ToastComponent;
-
-
-
 

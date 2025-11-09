@@ -2,11 +2,13 @@ import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 
 const OrderConfirmation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+  const { info } = useToast();
   const order = location.state?.order;
 
   if (!order) {
@@ -91,7 +93,7 @@ const OrderConfirmation = () => {
           </TrackButton>
         ) : (
           <GuestTrackButton onClick={() => {
-            alert(`Your Order ID is: ${order.id.substring(0, 8).toUpperCase()}\n\nPlease save this ID. Contact us if you need to track your order.`);
+            info(`Your Order ID is: ${order.id.substring(0, 8).toUpperCase()}. Please save this ID. Contact us if you need to track your order.`);
           }}>
             View Order ID
           </GuestTrackButton>
@@ -233,7 +235,9 @@ const ItemName = styled.span`
 const ItemPrice = styled.span`
   font-size: 0.875rem;
   font-weight: 600;
+  font-family: 'Space Grotesk', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   color: #333;
+  letter-spacing: 0.01em;
 `;
 
 const Divider = styled.div`
@@ -257,7 +261,9 @@ const TotalLabel = styled.span`
 const TotalValue = styled.span`
   font-size: 1.5rem;
   font-weight: 700;
+  font-family: 'Space Grotesk', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   color: #FF6B35;
+  letter-spacing: 0.02em;
 `;
 
 const ButtonGroup = styled.div`

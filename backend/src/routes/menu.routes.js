@@ -15,7 +15,6 @@ const router = express.Router();
 // Validation rules
 const menuItemValidation = [
   body('name').notEmpty().withMessage('Name is required'),
-  body('description').notEmpty().withMessage('Description is required'),
   body('price').isFloat({ min: 0 }).withMessage('Price must be a positive number'),
   body('category').notEmpty().withMessage('Category is required')
 ];
@@ -29,6 +28,9 @@ router.put('/:id', verifyToken, verifyAdmin, updateMenuItem);
 router.delete('/:id', verifyToken, verifyAdmin, deleteMenuItem);
 
 module.exports = router;
+
+
+
 
 
 

@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import io from 'socket.io-client';
 import api, { API_URL } from '../../config/api';
 import { useCart } from '../../context/CartContext';
+import { useToast } from '../../context/ToastContext';
 import { FiSearch, FiPlus, FiShoppingCart, FiRefreshCw, FiStar } from 'react-icons/fi';
 
 const Home = () => {
@@ -18,6 +19,7 @@ const Home = () => {
   
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { warning } = useToast();
 
   useEffect(() => {
     fetchDeliveryStatus();
@@ -105,7 +107,7 @@ const Home = () => {
     
     // Prevent adding when delivery is closed
     if (!isDeliveryOpen) {
-      alert(closedMessage || 'Delivery is currently closed. Orders cannot be placed at this time.');
+      warning(closedMessage || 'Delivery is currently closed. Orders cannot be placed at this time.');
       return;
     }
     
@@ -589,9 +591,11 @@ const PriceContainer = styled.div`
 
 const Price = styled.div`
   font-size: 1.125rem;
-  font-weight: 800;
+  font-weight: 700;
+  font-family: 'Space Grotesk', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   color: ${props => props.$unavailable ? '#999' : '#667eea'};
   line-height: 1.2;
+  letter-spacing: 0.01em;
   text-decoration: ${props => props.$unavailable ? 'line-through' : 'none'};
 `;
 

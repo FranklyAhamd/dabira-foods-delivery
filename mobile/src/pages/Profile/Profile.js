@@ -2,16 +2,20 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
+import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
 
 const Profile = () => {
   const navigate = useNavigate();
   const { user, updateProfile, logout } = useAuth();
+  const { info } = useToast();
   
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(user?.name || '');
   const [phone, setPhone] = useState(user?.phone || '');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const handleSave = async () => {
     setMessage('');
@@ -37,11 +41,13 @@ const Profile = () => {
     setMessage('');
   };
 
-  const handleLogout = () => {
-    if (window.confirm('Are you sure you want to logout?')) {
-      logout();
-      navigate('/login');
-    }
+  const handleLogoutClick = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const handleLogoutConfirm = () => {
+    logout();
+    navigate('/login');
   };
 
   return (
@@ -126,19 +132,19 @@ const Profile = () => {
           <MenuArrow>→</MenuArrow>
         </MenuItem>
 
-        <MenuItem onClick={() => alert('Coming soon!')}>
+        <MenuItem onClick={() => info('Coming soon!')}>
           <MenuIcon>❤️</MenuIcon>
           <MenuText>Favorites</MenuText>
           <MenuArrow>→</MenuArrow>
         </MenuItem>
 
-        <MenuItem onClick={() => alert('Coming soon!')}>
+        <MenuItem onClick={() => info('Coming soon!')}>
           <MenuIcon>📍</MenuIcon>
           <MenuText>Saved Addresses</MenuText>
           <MenuArrow>→</MenuArrow>
         </MenuItem>
 
-        <MenuItem onClick={() => alert('Coming soon!')}>
+        <MenuItem onClick={() => info('Coming soon!')}>
           <MenuIcon>💳</MenuIcon>
           <MenuText>Payment Methods</MenuText>
           <MenuArrow>→</MenuArrow>
@@ -146,10 +152,20 @@ const Profile = () => {
       </Section>
 
       <Section>
-        <LogoutButton onClick={handleLogout}>
+        <LogoutButton onClick={handleLogoutClick}>
           Logout
         </LogoutButton>
       </Section>
+
+      <ConfirmModal
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={handleLogoutConfirm}
+        title="Logout"
+        message="Are you sure you want to logout?"
+        confirmText="Logout"
+        cancelText="Cancel"
+      />
 
       <AppInfo>
         <AppVersion>Dabira Foods v1.0.0</AppVersion>
@@ -392,6 +408,9 @@ const AppVersion = styled.p`
 `;
 
 export default Profile;
+
+
+
 
 
 

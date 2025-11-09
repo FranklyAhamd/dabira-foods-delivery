@@ -6,87 +6,117 @@ const spin = keyframes`
 `;
 
 export const Container = styled.div`
-  padding: 30px;
+  padding: 16px;
   overflow-y: auto;
   height: calc(100vh - 80px);
+  background: #f8f9fa;
 `;
 
-export const PageTitle = styled.h1`
-  font-size: 28px;
-  font-weight: bold;
-  color: #333;
-`;
-
-export const Header = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
-`;
-
-export const AddButton = styled.button`
-  padding: 12px 24px;
+export const FloatingAddButton = styled.button`
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
   background-color: #FF6B35;
   color: white;
   border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.4);
   cursor: pointer;
-  transition: background-color 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 999;
 
   &:hover {
     background-color: #E55A2B;
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(255, 107, 53, 0.5);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  svg {
+    width: 24px;
+    height: 24px;
   }
 `;
 
 export const Table = styled.table`
   width: 100%;
   background: white;
-  border-radius: 12px;
+  border-radius: 6px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   border-collapse: collapse;
+  border: 1px solid #e5e7eb;
+  font-size: 11px;
 `;
 
 export const TableHeader = styled.th`
   text-align: left;
-  padding: 15px;
-  background-color: #f9f9f9;
-  border-bottom: 2px solid #e0e0e0;
-  font-size: 14px;
+  padding: 6px 8px;
+  background-color: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 10px;
   font-weight: 600;
-  color: #666;
+  color: #6b7280;
   text-transform: uppercase;
+  letter-spacing: 0.3px;
+  height: 22px;
+  white-space: nowrap;
 `;
 
 export const TableRow = styled.tr`
   &:hover {
-    background-color: #fafafa;
+    background-color: #f9fafb;
+  }
+  
+  &:last-child td {
+    border-bottom: none;
   }
 `;
 
 export const TableCell = styled.td`
-  padding: 15px;
-  border-bottom: 1px solid #f0f0f0;
-  font-size: 14px;
-  color: #333;
+  padding: 4px 8px;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 11px;
+  color: #374151;
+  height: 22px;
+  vertical-align: middle;
 `;
 
 export const ActionButton = styled.button`
-  padding: 6px 12px;
-  margin-right: 8px;
-  background-color: ${props => props.$edit ? '#2196F3' : '#F44336'};
-  color: white;
+  padding: 4px;
+  margin-right: 4px;
+  background-color: transparent;
+  color: ${props => props.$edit ? '#2563eb' : '#ef4444'};
   border: none;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 500;
+  border-radius: 3px;
   cursor: pointer;
-  transition: opacity 0.3s;
+  transition: all 0.15s;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
 
   &:hover {
-    opacity: 0.8;
+    opacity: 0.7;
+  }
+  
+  &:last-child {
+    margin-right: 0;
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
   }
 `;
 
@@ -105,118 +135,150 @@ export const ModalOverlay = styled.div`
 
 export const ModalContent = styled.div`
   background: white;
-  border-radius: 12px;
+  border-radius: 6px;
   width: 90%;
   max-width: 600px;
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  border: 1px solid #e5e7eb;
 `;
 
 export const ModalHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 25px;
-  border-bottom: 1px solid #e0e0e0;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
 `;
 
 export const ModalTitle = styled.h2`
-  font-size: 24px;
-  font-weight: bold;
-  color: #333;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
   margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 `;
 
 export const CloseButton = styled.button`
   background: none;
   border: none;
-  font-size: 32px;
-  color: #999;
+  font-size: 20px;
+  color: #9ca3af;
   cursor: pointer;
-  transition: color 0.3s;
+  transition: color 0.15s;
+  line-height: 1;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   &:hover {
-    color: #333;
+    color: #374151;
   }
 `;
 
 export const Form = styled.form`
-  padding: 25px;
+  padding: 12px 16px;
 `;
 
 export const FormGroup = styled.div`
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 `;
 
 export const Label = styled.label`
   display: block;
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #6b7280;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
 `;
 
 export const Input = styled.input`
   width: 100%;
-  padding: 12px;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  font-size: 14px;
-  transition: border-color 0.3s;
+  height: 22px;
+  padding: 4px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 12px;
+  transition: all 0.15s;
+  background: white;
 
   &:focus {
     border-color: #FF6B35;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.1);
+  }
+
+  &::placeholder {
+    color: #9ca3af;
+    font-size: 11px;
   }
 `;
 
 export const TextArea = styled.textarea`
   width: 100%;
-  padding: 12px;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  font-size: 14px;
+  min-height: 44px;
+  padding: 4px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 12px;
   resize: vertical;
-  transition: border-color 0.3s;
+  transition: all 0.15s;
   font-family: inherit;
+  line-height: 1.4;
 
   &:focus {
     border-color: #FF6B35;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.1);
   }
 `;
 
 export const Select = styled.select`
   width: 100%;
-  padding: 12px;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  font-size: 14px;
+  height: 22px;
+  padding: 2px 6px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 12px;
   background-color: white;
   cursor: pointer;
-  transition: border-color 0.3s;
+  transition: all 0.15s;
+  color: #374151;
 
   &:focus {
     border-color: #FF6B35;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.1);
   }
 `;
 
 export const ButtonGroup = styled.div`
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  margin-top: 30px;
+  gap: 8px;
+  margin-top: 12px;
 `;
 
 export const SubmitButton = styled.button`
-  padding: 12px 24px;
+  padding: 6px 16px;
   background-color: #FF6B35;
   color: white;
   border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: all 0.15s;
+  height: 24px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 
   &:hover {
     background-color: #E55A2B;
@@ -224,30 +286,35 @@ export const SubmitButton = styled.button`
 `;
 
 export const CancelButton = styled.button`
-  padding: 12px 24px;
+  padding: 6px 16px;
   background-color: transparent;
-  color: #666;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.15s;
+  height: 24px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 
   &:hover {
-    border-color: #999;
-    color: #333;
+    border-color: #9ca3af;
+    color: #374151;
+    background: #f9fafb;
   }
 `;
 
 export const EmptyMessage = styled.div`
   background: white;
-  padding: 60px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   text-align: center;
-  color: #999;
-  font-size: 18px;
+  color: #9ca3af;
+  font-size: 12px;
+  border: 1px solid #e5e7eb;
 `;
 
 export const LoadingContainer = styled.div`
@@ -258,22 +325,36 @@ export const LoadingContainer = styled.div`
 `;
 
 export const LoadingSpinner = styled.div`
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #FF6B35;
+  border: 3px solid #f3f4f6;
+  border-top: 3px solid #FF6B35;
   border-radius: 50%;
-  width: 50px;
-  height: 50px;
+  width: 32px;
+  height: 32px;
   animation: ${spin} 1s linear infinite;
 `;
 
 export const AvailableBadge = styled.span`
   display: inline-block;
-  padding: 6px 12px;
-  border-radius: 6px;
-  background-color: ${props => props.$available ? '#4CAF50' : '#F44336'};
+  padding: 2px 6px;
+  border-radius: 3px;
+  background-color: ${props => props.$available ? '#10b981' : '#ef4444'};
   color: white;
-  font-size: 12px;
-  font-weight: bold;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: none;
+
+  &:hover {
+    opacity: 0.85;
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
 `;
 
 

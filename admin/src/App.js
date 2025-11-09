@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 import { GlobalStyles } from './styles/GlobalStyles';
 
 // Pages
@@ -79,13 +80,18 @@ function AppRoutes() {
 
 function App() {
   return (
-    <AuthProvider>
-      <AppRoutes />
-    </AuthProvider>
+    <ToastProvider>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </ToastProvider>
   );
 }
 
 export default App;
+
+
+
 
 
 

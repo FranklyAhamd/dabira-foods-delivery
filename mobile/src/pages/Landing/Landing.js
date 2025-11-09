@@ -5,17 +5,21 @@ import io from 'socket.io-client';
 import api, { API_URL } from '../../config/api';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import { FiArrowRight, FiShoppingBag, FiClock, FiMapPin, FiPhone, FiStar } from 'react-icons/fi';
 
 const Landing = () => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { isAuthenticated } = useAuth();
+  const { warning } = useToast();
   const [featuredItems, setFeaturedItems] = useState([]);
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isDeliveryOpen, setIsDeliveryOpen] = useState(true);
   const [closedMessage, setClosedMessage] = useState('');
+  const [backgroundImages, setBackgroundImages] = useState([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
     fetchSettings();
@@ -63,17 +67,50 @@ const Landing = () => {
           .filter(item => item.available)
           .slice(0, 6);
         setFeaturedItems(items);
+        
+        // Extract images for background slider (filter out items without images)
+        const images = response.data.menuItems
+          .filter(item => item.image && item.image.trim() !== '')
+          .map(item => item.image)
+          .slice(0, 5); // Use up to 5 images for slider
+        
+        if (images.length > 0) {
+          setBackgroundImages(images);
+        }
       }
     } catch (err) {
       console.error('Error fetching featured items:', err);
     }
   };
 
+  // Reset index when images change
+  useEffect(() => {
+    if (backgroundImages.length === 0) {
+      setCurrentImageIndex(0);
+    } else if (currentImageIndex >= backgroundImages.length) {
+      setCurrentImageIndex(0);
+    }
+  }, [backgroundImages.length]);
+
+  // Auto-rotate background images
+  useEffect(() => {
+    if (backgroundImages.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentImageIndex((prevIndex) => {
+          const nextIndex = (prevIndex + 1) % backgroundImages.length;
+          return nextIndex;
+        });
+      }, 5000); // Change image every 5 seconds
+      
+      return () => clearInterval(interval);
+    }
+  }, [backgroundImages.length]);
+
   const handleAddToCart = (item, e) => {
     e.stopPropagation();
     
     if (!isDeliveryOpen) {
-      alert(closedMessage || 'Delivery is currently closed. Orders cannot be placed at this time.');
+      warning(closedMessage || 'Delivery is currently closed. Orders cannot be placed at this time.');
       return;
     }
     
@@ -98,10 +135,25 @@ const Landing = () => {
   return (
     <Container>
       {/* Hero Section */}
-      <HeroSection>
+      <HeroSection $hasImages={backgroundImages.length > 0}>
+        <BackgroundImageContainer>
+          {backgroundImages.map((image, index) => (
+            <BackgroundImage
+              key={`bg-img-${index}`}
+              $active={index === currentImageIndex}
+              src={image}
+              alt="Food background"
+              onError={(e) => {
+                // Hide broken images
+                e.target.style.display = 'none';
+              }}
+            />
+          ))}
+        </BackgroundImageContainer>
+        {backgroundImages.length > 0 && <ImageOverlay />}
         <HeroContent>
-          <HeroTitle>Welcome to {settings?.restaurantName || 'Dabira Foods'}</HeroTitle>
-          <HeroSubtitle>Authentic Nigerian Delicacies Delivered to Your Doorstep</HeroSubtitle>
+          <HeroTitle $animated>Welcome to {settings?.restaurantName || 'Dabira Foods'}</HeroTitle>
+          <HeroSubtitle $animated>Authentic Nigerian Delicacies Delivered to Your Doorstep</HeroSubtitle>
           
           {!isDeliveryOpen && (
             <DeliveryStatus>
@@ -273,13 +325,19 @@ const LoadingText = styled.p`
 `;
 
 const HeroSection = styled.div`
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: ${props => props.$hasImages 
+    ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' 
+    : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'};
   color: white;
   padding: 3rem 1.5rem;
   text-align: center;
   box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
   position: relative;
   overflow: hidden;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   
   &::before {
     content: '';
@@ -290,6 +348,7 @@ const HeroSection = styled.div`
     height: 200%;
     background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
     animation: pulse 4s ease-in-out infinite;
+    z-index: 1;
   }
   
   @keyframes pulse {
@@ -298,16 +357,68 @@ const HeroSection = styled.div`
   }
 `;
 
+const BackgroundImageContainer = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  overflow: hidden;
+`;
+
+const BackgroundImage = styled.img`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: ${props => props.$active ? 1 : 0};
+  transition: opacity 1.5s ease-in-out;
+  z-index: 0;
+  pointer-events: none;
+  will-change: opacity;
+  visibility: ${props => props.$active ? 'visible' : 'hidden'};
+`;
+
+const ImageOverlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    135deg,
+    rgba(102, 126, 234, 0.85) 0%,
+    rgba(118, 75, 162, 0.85) 100%
+  );
+  z-index: 1;
+`;
+
 const HeroContent = styled.div`
   position: relative;
-  z-index: 1;
+  z-index: 2;
+  width: 100%;
 `;
 
 const HeroTitle = styled.h1`
   font-size: 2rem;
   font-weight: 800;
   margin-bottom: 0.75rem;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  animation: ${props => props.$animated ? 'fadeInUp 1s ease-out' : 'none'};
+  
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 `;
 
 const HeroSubtitle = styled.p`
@@ -316,6 +427,19 @@ const HeroSubtitle = styled.p`
   font-weight: 400;
   margin-bottom: 1.5rem;
   line-height: 1.5;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  animation: ${props => props.$animated ? 'fadeInUp 1s ease-out 0.2s both' : 'none'};
+  
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 `;
 
 const DeliveryStatus = styled.div`
@@ -351,6 +475,18 @@ const CTAButtons = styled.div`
   flex-direction: column;
   gap: 0.75rem;
   margin-top: 1.5rem;
+  animation: fadeInUp 1s ease-out 0.4s both;
+  
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 `;
 
 const PrimaryButton = styled.button`
@@ -525,8 +661,10 @@ const FeaturedFooter = styled.div`
 
 const FeaturedPrice = styled.div`
   font-size: 1rem;
-  font-weight: 800;
+  font-weight: 700;
+  font-family: 'Space Grotesk', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   color: #667eea;
+  letter-spacing: 0.01em;
 `;
 
 const AddButton = styled.button`
@@ -593,4 +731,7 @@ const BenefitText = styled.p`
 `;
 
 export default Landing;
+
+
+
 

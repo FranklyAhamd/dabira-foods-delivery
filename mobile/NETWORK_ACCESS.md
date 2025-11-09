@@ -57,3 +57,6 @@ If your IP changes, update it in:
 - `backend/src/server.js` (lines 25-26 and 71-72)
 - The mobile app will automatically detect and use the correct IP
 
+
+
+

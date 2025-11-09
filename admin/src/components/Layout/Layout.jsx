@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import ConfirmModal from '../ConfirmModal/ConfirmModal';
 import { 
   FiBarChart2, 
   FiMenu, 
@@ -30,6 +31,7 @@ const Layout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const menuItems = [
     { path: '/', icon: FiBarChart2, label: 'Dashboard' },
@@ -38,11 +40,13 @@ const Layout = ({ children }) => {
     { path: '/settings', icon: FiSettings, label: 'Settings' }
   ];
 
-  const handleLogout = () => {
-    if (window.confirm('Are you sure you want to logout?')) {
-      logout();
-      navigate('/login');
-    }
+  const handleLogoutClick = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const handleLogoutConfirm = () => {
+    logout();
+    navigate('/login');
   };
 
   return (
@@ -67,7 +71,7 @@ const Layout = ({ children }) => {
           ))}
         </NavMenu>
 
-        <LogoutButton onClick={handleLogout}>
+        <LogoutButton onClick={handleLogoutClick}>
           <NavIcon>
             <FiLogOut size={20} />
           </NavIcon>
@@ -75,9 +79,25 @@ const Layout = ({ children }) => {
         </LogoutButton>
       </Sidebar>
 
+      <ConfirmModal
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={handleLogoutConfirm}
+        title="Logout"
+        message="Are you sure you want to logout?"
+        confirmText="Logout"
+        cancelText="Cancel"
+      />
+
       <Content>
         <Header>
-          <HeaderTitle>Nigerian Food Admin Dashboard</HeaderTitle>
+          <HeaderTitle>
+            {location.pathname === '/menu' ? 'Menu Management' :
+             location.pathname === '/orders' ? 'Orders' :
+             location.pathname === '/settings' ? 'Settings' :
+             location.pathname === '/' ? 'Dashboard' :
+             'Nigerian Food Admin Dashboard'}
+          </HeaderTitle>
           <UserInfo>
             <UserName>
               <FiUser size={16} /> {user?.name}

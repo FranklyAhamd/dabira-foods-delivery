@@ -7,7 +7,7 @@ export const useCart = () => {
 };
 
 export const CartProvider = ({ children }) => {
-  const [cartItems, setCartItems] = useState([]);
+  const [cartItems, setCartItems] = useState([]); // Now stores plates instead of individual items
   const [loading, setLoading] = useState(true);
 
   // Load cart from storage when the app starts
@@ -39,7 +39,19 @@ export const CartProvider = ({ children }) => {
     }
   }, [cartItems, loading]);
 
-  // Add item to cart
+  // Add plate to cart (new flow)
+  const addPlateToCart = (plate) => {
+    if (!plate || !plate.items || plate.items.length === 0) {
+      console.warn('Cannot add empty plate to cart');
+      return;
+    }
+
+    setCartItems(prevItems => {
+      return [...prevItems, { ...plate }];
+    });
+  };
+
+  // Legacy: Add item to cart (kept for backward compatibility, but should use plates)
   const addToCart = (item, quantity = 1) => {
     // Prevent adding unavailable items
     if (!item.available) {
@@ -47,41 +59,71 @@ export const CartProvider = ({ children }) => {
       return;
     }
 
-    setCartItems(prevItems => {
-      const existingItemIndex = prevItems.findIndex(
-        cartItem => cartItem.id === item.id
-      );
+    // Convert single item to a plate format for consistency
+    const plate = {
+      id: Date.now().toString(),
+      items: [
+        {
+          menuItem: { ...item },
+          portions: quantity
+        }
+      ],
+      createdAt: new Date().toISOString()
+    };
 
-      if (existingItemIndex >= 0) {
-        const updatedItems = [...prevItems];
-        updatedItems[existingItemIndex] = {
-          ...updatedItems[existingItemIndex],
-          quantity: updatedItems[existingItemIndex].quantity + quantity
-        };
-        return updatedItems;
-      } else {
-        return [...prevItems, { ...item, quantity }];
-      }
-    });
+    addPlateToCart(plate);
   };
 
-  // Update item quantity
-  const updateQuantity = (itemId, quantity) => {
-    if (quantity <= 0) {
-      removeFromCart(itemId);
+  // Update plate item portions
+  const updatePlateItemPortions = (plateId, menuItemId, portions) => {
+    if (portions <= 0) {
+      removePlateItem(plateId, menuItemId);
       return;
     }
 
     setCartItems(prevItems =>
-      prevItems.map(item =>
-        item.id === itemId ? { ...item, quantity } : item
-      )
+      prevItems.map(plate => {
+        if (plate.id === plateId) {
+          return {
+            ...plate,
+            items: plate.items.map(item =>
+              item.menuItem.id === menuItemId
+                ? { ...item, portions }
+                : item
+            )
+          };
+        }
+        return plate;
+      })
     );
   };
 
-  // Remove item from cart
-  const removeFromCart = (itemId) => {
-    setCartItems(prevItems => prevItems.filter(item => item.id !== itemId));
+  // Remove item from plate
+  const removePlateItem = (plateId, menuItemId) => {
+    setCartItems(prevItems =>
+      prevItems.map(plate => {
+        if (plate.id === plateId) {
+          const updatedItems = plate.items.filter(item => item.menuItem.id !== menuItemId);
+          // If plate becomes empty, remove the entire plate
+          if (updatedItems.length === 0) {
+            return null;
+          }
+          return { ...plate, items: updatedItems };
+        }
+        return plate;
+      }).filter(plate => plate !== null)
+    );
+  };
+
+  // Remove entire plate from cart
+  const removeFromCart = (plateId) => {
+    setCartItems(prevItems => prevItems.filter(plate => plate.id !== plateId));
+  };
+
+  // Legacy: Update item quantity (for backward compatibility)
+  const updateQuantity = (itemId, quantity) => {
+    // This is now deprecated - should use updatePlateItemPortions instead
+    console.warn('updateQuantity is deprecated. Use updatePlateItemPortions instead.');
   };
 
   // Clear entire cart
@@ -89,28 +131,42 @@ export const CartProvider = ({ children }) => {
     setCartItems([]);
   };
 
-  // Calculate total price
+  // Calculate total price (now works with plates)
   const getTotalPrice = () => {
-    return cartItems.reduce(
-      (total, item) => total + item.price * item.quantity,
-      0
-    );
+    return cartItems.reduce((total, plate) => {
+      const plateTotal = plate.items.reduce(
+        (plateSum, item) => plateSum + (item.menuItem.price * item.portions),
+        0
+      );
+      return total + plateTotal;
+    }, 0);
   };
 
-  // Get total number of items
+  // Get total number of plates
+  const getTotalPlates = () => {
+    return cartItems.length;
+  };
+
+  // Get total number of items across all plates
   const getTotalItems = () => {
-    return cartItems.reduce((total, item) => total + item.quantity, 0);
+    return cartItems.reduce((total, plate) => {
+      return total + plate.items.reduce((sum, item) => sum + item.portions, 0);
+    }, 0);
   };
 
   const value = {
-    cartItems,
+    cartItems, // Now stores plates
     loading,
-    addToCart,
-    updateQuantity,
-    removeFromCart,
+    addToCart, // Legacy - converts to plate
+    addPlateToCart, // New - adds plate directly
+    updateQuantity, // Legacy - deprecated
+    updatePlateItemPortions, // New - updates portions in a plate
+    removeFromCart, // Now removes entire plate
+    removePlateItem, // New - removes item from plate
     clearCart,
     getTotalPrice,
-    getTotalItems
+    getTotalItems,
+    getTotalPlates
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

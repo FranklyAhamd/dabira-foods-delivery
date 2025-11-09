@@ -82,7 +82,7 @@ const createMenuItem = async (req, res) => {
     const menuItem = await prisma.menuItem.create({
       data: {
         name,
-        description,
+        description: description || '',
         price: parseFloat(price),
         category,
         image: image || null,
@@ -115,7 +115,7 @@ const updateMenuItem = async (req, res) => {
       where: { id },
       data: {
         name: name || undefined,
-        description: description || undefined,
+        description: description !== undefined ? description : undefined,
         price: price ? parseFloat(price) : undefined,
         category: category || undefined,
         image: image !== undefined ? image : undefined,
@@ -165,8 +165,8 @@ const getCategories = async (req, res) => {
   try {
     const prisma = req.app.get('prisma');
 
+    // Get all unique categories (both available and unavailable) for admin panel
     const categories = await prisma.menuItem.findMany({
-      where: { available: true },
       select: { category: true },
       distinct: ['category']
     });

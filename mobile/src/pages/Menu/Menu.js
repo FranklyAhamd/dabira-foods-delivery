@@ -4,7 +4,11 @@ import styled from 'styled-components';
 import io from 'socket.io-client';
 import api, { API_URL } from '../../config/api';
 import { useCart } from '../../context/CartContext';
-import { FiSearch, FiPlus, FiShoppingCart, FiRefreshCw, FiStar } from 'react-icons/fi';
+import { usePlate } from '../../context/PlateContext';
+import { useToast } from '../../context/ToastContext';
+import PortionModal from '../../components/PortionModal/PortionModal';
+import PlateCard from '../../components/PlateCard/PlateCard';
+import { FiSearch, FiPlus, FiRefreshCw } from 'react-icons/fi';
 
 const Menu = () => {
   const [menuItems, setMenuItems] = useState([]);
@@ -17,7 +21,10 @@ const Menu = () => {
   const [error, setError] = useState(null);
   
   const navigate = useNavigate();
-  const { addToCart } = useCart();
+  const { warning } = useToast();
+  const { createPlate, addItemToPlate, currentPlate } = usePlate();
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [showPortionModal, setShowPortionModal] = useState(false);
 
   useEffect(() => {
     fetchDeliveryStatus();
@@ -100,12 +107,12 @@ const Menu = () => {
     return matchesCategory && matchesSearch;
   });
 
-  const handleAddToCart = (item, e) => {
+  const handleItemClick = (item, e) => {
     e.stopPropagation();
     
     // Prevent adding when delivery is closed
     if (!isDeliveryOpen) {
-      alert(closedMessage || 'Delivery is currently closed. Orders cannot be placed at this time.');
+      warning(closedMessage || 'Delivery is currently closed. Orders cannot be placed at this time.');
       return;
     }
     
@@ -114,7 +121,22 @@ const Menu = () => {
       return;
     }
     
-    addToCart(item, 1);
+    setSelectedItem(item);
+    setShowPortionModal(true);
+  };
+
+  const handlePortionConfirm = (menuItem, portions) => {
+    if (currentPlate) {
+      // Add to existing plate
+      addItemToPlate(menuItem, portions);
+    } else {
+      // Create new plate
+      createPlate(menuItem, portions);
+    }
+  };
+
+  const handleAddMoreClick = () => {
+    setShowPortionModal(true);
   };
 
   if (loading) {
@@ -129,7 +151,7 @@ const Menu = () => {
           <SearchIcon>
             <FiSearch size={20} />
           </SearchIcon>
-          <SearchInput disabled placeholder="Searching menu..." />
+          <SearchInput disabled placeholder="Searching menu..." value="" />
         </SearchBar>
 
         <Categories $sticky>
@@ -208,7 +230,7 @@ const Menu = () => {
         <SearchInput
           type="text"
           placeholder="Search for Nigerian dishes..."
-          value={searchQuery}
+          value={searchQuery || ''}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </SearchBar>
@@ -236,8 +258,8 @@ const Menu = () => {
           {filteredItems.map(item => (
             <ProductCard 
               key={item.id} 
-              onClick={() => !isDeliveryOpen ? null : navigate(`/menu/${item.id}`)}
-              $disabled={!isDeliveryOpen}
+              onClick={(e) => handleItemClick(item, e)}
+              $disabled={!isDeliveryOpen || !item.available}
             >
               <ImageContainer>
                 <ProductImage 
@@ -256,29 +278,22 @@ const Menu = () => {
               <ProductInfo>
                 <ProductName>{item.name}</ProductName>
                 <ProductDescription>{item.description}</ProductDescription>
-                
-                <ProductRating>
-                  <StarIcon>
-                    <FiStar size={14} />
-                  </StarIcon>
-                  <RatingText>4.5</RatingText>
-                  <ReviewCount>(120+)</ReviewCount>
-                </ProductRating>
 
                 <ProductFooter>
                   <PriceContainer>
-                    <Price $unavailable={!item.available}>₦{item.price.toFixed(2)}</Price>
-                    <PriceSubtext>per serving</PriceSubtext>
+                    <Price $unavailable={!item.available}>
+                      ₦{item.price.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </Price>
                   </PriceContainer>
                   
                   <AddToCartButton 
-                    onClick={(e) => handleAddToCart(item, e)}
+                    onClick={(e) => handleItemClick(item, e)}
                     disabled={!item.available || !isDeliveryOpen}
                     $unavailable={!item.available}
-                    aria-label={item.available && isDeliveryOpen ? "Add to cart" : "Item unavailable or delivery closed"}
+                    aria-label={item.available && isDeliveryOpen ? "Add to plate" : "Item unavailable or delivery closed"}
                   >
                     {item.available ? (
-                      <FiPlus size={20} />
+                      <FiPlus size={16} />
                     ) : (
                       <span style={{ fontSize: '12px' }}>✕</span>
                     )}
@@ -288,6 +303,26 @@ const Menu = () => {
             </ProductCard>
           ))}
         </ProductsGrid>
+      )}
+
+      {/* Portion Modal */}
+      <PortionModal
+        isOpen={showPortionModal}
+        onClose={() => {
+          setShowPortionModal(false);
+          setSelectedItem(null);
+        }}
+        menuItem={selectedItem}
+        onConfirm={handlePortionConfirm}
+        isDeliveryOpen={isDeliveryOpen}
+      />
+
+      {/* Plate Card */}
+      {currentPlate && currentPlate.items.length > 0 && (
+        <PlateCard
+          onAddMoreClick={handleAddMoreClick}
+          isDeliveryOpen={isDeliveryOpen}
+        />
       )}
     </Container>
   );
@@ -397,19 +432,19 @@ const CategoryChip = styled.button`
 const ProductsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 0.75rem;
-  padding: 0 0.75rem;
+  gap: 0.5rem;
+  padding: 0 0.5rem;
   
   @media (min-width: 768px) {
     grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem;
+    gap: 1rem;
     padding: 0 1rem;
   }
 `;
 
 const ProductCard = styled.div`
   background: white;
-  border-radius: 12px;
+  border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   cursor: ${props => props.$disabled ? 'not-allowed' : 'pointer'};
@@ -428,7 +463,7 @@ const ProductCard = styled.div`
 const ImageContainer = styled.div`
   position: relative;
   width: 100%;
-  padding-top: 100%; /* Square aspect ratio */
+  padding-top: 70%; /* Reduced from 100% to make images smaller */
   overflow: hidden;
   background: #f8f9fa;
 `;
@@ -521,17 +556,17 @@ const UnavailableBadge = styled.div`
 `;
 
 const ProductInfo = styled.div`
-  padding: 0.75rem;
+  padding: 0.5rem;
   display: flex;
   flex-direction: column;
   flex: 1;
 `;
 
 const ProductName = styled.h3`
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   font-weight: 700;
   color: #1a1a1a;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.125rem;
   line-height: 1.3;
   display: -webkit-box;
   -webkit-line-clamp: 1;
@@ -540,39 +575,15 @@ const ProductName = styled.h3`
 `;
 
 const ProductDescription = styled.p`
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   color: #666;
-  margin-bottom: 0.5rem;
-  line-height: 1.4;
+  margin-bottom: 0.375rem;
+  line-height: 1.3;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
   flex: 1;
-`;
-
-const ProductRating = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  margin-bottom: 0.5rem;
-`;
-
-const StarIcon = styled.span`
-  color: #fbbf24;
-  display: flex;
-  align-items: center;
-`;
-
-const RatingText = styled.span`
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: #1a1a1a;
-`;
-
-const ReviewCount = styled.span`
-  font-size: 0.75rem;
-  color: #999;
 `;
 
 const ProductFooter = styled.div`
@@ -588,8 +599,10 @@ const PriceContainer = styled.div`
 `;
 
 const Price = styled.div`
-  font-size: 1.125rem;
-  font-weight: 800;
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: 'Space Grotesk', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  letter-spacing: 0.01em;
   color: ${props => props.$unavailable ? '#999' : '#667eea'};
   line-height: 1.2;
   text-decoration: ${props => props.$unavailable ? 'line-through' : 'none'};
@@ -602,8 +615,8 @@ const PriceSubtext = styled.span`
 `;
 
 const AddToCartButton = styled.button`
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: ${props => props.$unavailable 
     ? '#e5e7eb' 
@@ -626,6 +639,11 @@ const AddToCartButton = styled.button`
   
   &:disabled {
     opacity: 0.6;
+  }
+  
+  svg {
+    width: 16px;
+    height: 16px;
   }
 `;
 
@@ -789,4 +807,7 @@ const CategorySelect = styled.select`
 `;
 
 export default Menu;
+
+
+
 
