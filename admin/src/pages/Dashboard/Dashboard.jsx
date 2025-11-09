@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import io from 'socket.io-client';
 import api, { API_URL } from '../../config/api';
@@ -7,8 +7,7 @@ import {
   FiClock, 
   FiCheckCircle, 
   FiDollarSign, 
-  FiCalendar,
-  FiTrendingUp
+  FiCalendar
 } from 'react-icons/fi';
 import {
   Container,
@@ -40,12 +39,6 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchStats();
-    fetchRecentOrders();
-    setupSocket();
-  }, []);
-
   const fetchStats = async () => {
     try {
       const response = await api.get('/orders/stats');
@@ -70,7 +63,7 @@ const Dashboard = () => {
     }
   };
 
-  const setupSocket = () => {
+  const setupSocket = useCallback(() => {
     const socketUrl = API_URL.replace('/api', '');
     const socket = io(socketUrl, {
       transports: ['websocket', 'polling'], // Allow both transports
@@ -104,7 +97,15 @@ const Dashboard = () => {
     });
 
     return () => socket.disconnect();
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    fetchStats();
+    fetchRecentOrders();
+    return setupSocket();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const getStatusColor = (status) => {
     switch (status) {

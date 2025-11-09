@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import api from '../../config/api';
 import {
   Container,
@@ -40,11 +40,7 @@ const Settings = () => {
   const [isDeliveryOpen, setIsDeliveryOpen] = useState(true);
   const [closedMessage, setClosedMessage] = useState('Delivery is closed for today. Please check back during operating hours.');
 
-  useEffect(() => {
-    fetchSettings();
-  }, []);
-
-  const fetchSettings = async () => {
+  const fetchSettings = useCallback(async () => {
     try {
       const response = await api.get('/settings');
       if (response.success) {
@@ -69,7 +65,11 @@ const Settings = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
 
   const handleToggleDelivery = async (open) => {
     setMessage({ type: '', text: '' });

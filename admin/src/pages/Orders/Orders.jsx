@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import io from 'socket.io-client';
 import api, { API_URL } from '../../config/api';
 import { useToast } from '../../context/ToastContext';
@@ -44,9 +44,17 @@ const Orders = () => {
     setupSocket();
   }, []);
 
+  const filterOrders = useCallback(() => {
+    if (selectedStatus === 'ALL') {
+      setFilteredOrders(orders);
+    } else {
+      setFilteredOrders(orders.filter(order => order.status === selectedStatus));
+    }
+  }, [selectedStatus, orders]);
+
   useEffect(() => {
     filterOrders();
-  }, [selectedStatus, orders]);
+  }, [filterOrders]);
 
   const fetchOrders = async () => {
     try {
@@ -95,14 +103,6 @@ const Orders = () => {
     });
 
     return () => socket.disconnect();
-  };
-
-  const filterOrders = () => {
-    if (selectedStatus === 'ALL') {
-      setFilteredOrders(orders);
-    } else {
-      setFilteredOrders(orders.filter(order => order.status === selectedStatus));
-    }
   };
 
   const handleStatusChange = async (orderId, newStatus) => {
