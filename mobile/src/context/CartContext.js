@@ -16,10 +16,28 @@ export const CartProvider = ({ children }) => {
       try {
         const storedCart = localStorage.getItem('cart');
         if (storedCart) {
-          setCartItems(JSON.parse(storedCart));
+          const parsedCart = JSON.parse(storedCart);
+          // Validate and clean cart data
+          if (Array.isArray(parsedCart)) {
+            // Filter out invalid plates
+            const validCart = parsedCart.filter(plate => 
+              plate && 
+              plate.items && 
+              Array.isArray(plate.items) && 
+              plate.items.length > 0
+            );
+            setCartItems(validCart);
+          } else {
+            // If old format, clear it
+            setCartItems([]);
+            localStorage.removeItem('cart');
+          }
         }
       } catch (error) {
         console.error('Error loading cart:', error);
+        // Clear corrupted cart data
+        localStorage.removeItem('cart');
+        setCartItems([]);
       } finally {
         setLoading(false);
       }
@@ -133,9 +151,20 @@ export const CartProvider = ({ children }) => {
 
   // Calculate total price (now works with plates)
   const getTotalPrice = () => {
+    if (!cartItems || !Array.isArray(cartItems)) {
+      return 0;
+    }
     return cartItems.reduce((total, plate) => {
+      if (!plate || !plate.items || !Array.isArray(plate.items)) {
+        return total;
+      }
       const plateTotal = plate.items.reduce(
-        (plateSum, item) => plateSum + (item.menuItem.price * item.portions),
+        (plateSum, item) => {
+          if (!item || !item.menuItem || typeof item.menuItem.price !== 'number' || typeof item.portions !== 'number') {
+            return plateSum;
+          }
+          return plateSum + (item.menuItem.price * item.portions);
+        },
         0
       );
       return total + plateTotal;
@@ -149,8 +178,19 @@ export const CartProvider = ({ children }) => {
 
   // Get total number of items across all plates
   const getTotalItems = () => {
+    if (!cartItems || !Array.isArray(cartItems)) {
+      return 0;
+    }
     return cartItems.reduce((total, plate) => {
-      return total + plate.items.reduce((sum, item) => sum + item.portions, 0);
+      if (!plate || !plate.items || !Array.isArray(plate.items)) {
+        return total;
+      }
+      return total + plate.items.reduce((sum, item) => {
+        if (!item || typeof item.portions !== 'number') {
+          return sum;
+        }
+        return sum + item.portions;
+      }, 0);
     }, 0);
   };
 
