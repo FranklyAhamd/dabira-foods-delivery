@@ -46,6 +46,33 @@ export const FloatingAddButton = styled.button`
   }
 `;
 
+export const CategoryManageButton = styled.button`
+  padding: 6px;
+  background-color: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  &:hover {
+    background-color: #e5e7eb;
+    border-color: #9ca3af;
+    color: #374151;
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+`;
+
 export const Table = styled.table`
   width: 100%;
   background: white;

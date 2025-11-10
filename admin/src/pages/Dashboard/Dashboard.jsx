@@ -8,6 +8,7 @@ import {
   FiCheckCircle, 
   FiDollarSign, 
   FiCalendar
+  // eslint-disable-next-line no-unused-vars
 } from 'react-icons/fi';
 import {
   Container,

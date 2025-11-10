@@ -6,7 +6,8 @@ const {
   createMenuItem,
   updateMenuItem,
   deleteMenuItem,
-  getCategories
+  getCategories,
+  updateCategory
 } = require('../controllers/menu.controller');
 const { verifyToken, verifyAdmin, optionalAuth } = require('../middleware/auth.middleware');
 
@@ -22,9 +23,10 @@ const menuItemValidation = [
 // Routes
 router.get('/', optionalAuth, getMenuItems);
 router.get('/categories', getCategories);
-router.get('/:id', optionalAuth, getMenuItem);
 router.post('/', verifyToken, verifyAdmin, menuItemValidation, createMenuItem);
+router.put('/update-category', verifyToken, verifyAdmin, updateCategory);
 router.put('/:id', verifyToken, verifyAdmin, updateMenuItem);
+router.get('/:id', optionalAuth, getMenuItem);
 router.delete('/:id', verifyToken, verifyAdmin, deleteMenuItem);
 
 module.exports = router;

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { FiEdit, FiTrash2, FiPlus } from 'react-icons/fi';
+import { FiEdit, FiTrash2, FiPlus, FiSettings } from 'react-icons/fi';
 import api from '../../config/api';
 import { useToast } from '../../context/ToastContext';
 import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
+import CategoryManagementModal from '../../components/CategoryManagementModal/CategoryManagementModal';
 import {
   Container,
   Table,
@@ -28,7 +29,8 @@ import {
   LoadingContainer,
   LoadingSpinner,
   AvailableBadge,
-  FloatingAddButton
+  FloatingAddButton,
+  CategoryManageButton
 } from './MenuManagementStyles';
 
 const MenuManagement = () => {
@@ -39,6 +41,7 @@ const MenuManagement = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, item: null });
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     price: '',
@@ -240,28 +243,39 @@ const MenuManagement = () => {
 
               <FormGroup>
                 <Label>Category *</Label>
-                {categories.length > 0 ? (
-                  <Select
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    required
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  {categories.length > 0 ? (
+                    <Select
+                      value={formData.category}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      required
+                      style={{ flex: 1 }}
+                    >
+                      <option value="">Select a category</option>
+                      {categories.map((category) => (
+                        <option key={category} value={category}>
+                          {category}
+                        </option>
+                      ))}
+                    </Select>
+                  ) : (
+                    <Input
+                      type="text"
+                      value={formData.category}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      placeholder="Enter category (e.g., Burgers, Pizza, Drinks)"
+                      required
+                      style={{ flex: 1 }}
+                    />
+                  )}
+                  <CategoryManageButton
+                    type="button"
+                    onClick={() => setShowCategoryModal(true)}
+                    title="Manage Categories"
                   >
-                    <option value="">Select a category</option>
-                    {categories.map((category) => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
-                    ))}
-                  </Select>
-                ) : (
-                  <Input
-                    type="text"
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    placeholder="Enter category (e.g., Burgers, Pizza, Drinks)"
-                    required
-                  />
-                )}
+                    <FiSettings size={16} />
+                  </CategoryManageButton>
+                </div>
               </FormGroup>
 
               <FormGroup>
@@ -321,6 +335,20 @@ const MenuManagement = () => {
         message={deleteConfirm.item ? `Are you sure you want to delete "${deleteConfirm.item.name}"? This action cannot be undone.` : ''}
         confirmText="Delete"
         cancelText="Cancel"
+      />
+
+      <CategoryManagementModal
+        isOpen={showCategoryModal}
+        onClose={() => setShowCategoryModal(false)}
+        categories={categories}
+        onCategoriesChange={(updatedCategories) => {
+          setCategories(updatedCategories);
+          // If the selected category was renamed, update it
+          if (formData.category && !updatedCategories.includes(formData.category)) {
+            // Category was deleted, clear selection
+            setFormData({ ...formData, category: '' });
+          }
+        }}
       />
     </Container>
   );

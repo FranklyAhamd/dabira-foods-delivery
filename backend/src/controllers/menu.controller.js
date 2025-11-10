@@ -186,13 +186,54 @@ const getCategories = async (req, res) => {
   }
 };
 
+// Update category name (updates all menu items with old category to new category)
+const updateCategory = async (req, res) => {
+  try {
+    const { oldCategory, newCategory } = req.body;
+    const prisma = req.app.get('prisma');
+
+    if (!oldCategory || !newCategory) {
+      return res.status(400).json({
+        success: false,
+        message: 'Old category and new category are required'
+      });
+    }
+
+    if (oldCategory === newCategory) {
+      return res.status(400).json({
+        success: false,
+        message: 'Old and new category names cannot be the same'
+      });
+    }
+
+    // Update all menu items with the old category to the new category
+    const result = await prisma.menuItem.updateMany({
+      where: { category: oldCategory },
+      data: { category: newCategory }
+    });
+
+    res.json({
+      success: true,
+      message: `Category updated successfully. ${result.count} menu item(s) updated.`,
+      data: { count: result.count }
+    });
+  } catch (error) {
+    console.error('Update category error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating category'
+    });
+  }
+};
+
 module.exports = {
   getMenuItems,
   getMenuItem,
   createMenuItem,
   updateMenuItem,
   deleteMenuItem,
-  getCategories
+  getCategories,
+  updateCategory
 };
 
 
