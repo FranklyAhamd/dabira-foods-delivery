@@ -72,26 +72,111 @@ const Checkout = () => {
     try {
       setLoading(true);
       
-      const orderItems = cartItems.map(item => ({
-        menuItemId: item.id,
-        quantity: item.quantity
-      }));
+      // Flatten plates into order items
+      // cartItems are plates, each plate has items array with menuItem and portions
+      const orderItems = [];
+      cartItems.forEach(plate => {
+        if (plate.items && Array.isArray(plate.items)) {
+          plate.items.forEach(plateItem => {
+            if (plateItem.menuItem && plateItem.menuItem.id) {
+              const quantity = parseInt(plateItem.portions || 1, 10);
+              if (quantity > 0 && plateItem.menuItem.id) {
+                orderItems.push({
+                  menuItemId: plateItem.menuItem.id,
+                  quantity: quantity
+                });
+              }
+            }
+          });
+        }
+      });
       
-      const response = await api.post('/orders', {
+      if (orderItems.length === 0) {
+        setError('Your cart is empty. Please add items before placing an order.');
+        setLoading(false);
+        return;
+      }
+      
+      // Validate required fields
+      if (!deliveryAddress.trim() || !customerName.trim() || !customerPhone.trim()) {
+        setError('Please fill in all required fields (Name, Phone, and Delivery Address).');
+        setLoading(false);
+        return;
+      }
+      
+      const orderPayload = {
         items: orderItems,
-        deliveryAddress,
-        customerName,
-        customerPhone,
-        notes: notes || null
-      });
+        deliveryAddress: deliveryAddress.trim(),
+        customerName: customerName.trim(),
+        customerPhone: customerPhone.trim(),
+        notes: notes ? notes.trim() : null
+      };
       
-      clearCart();
-      navigate('/order-confirmation', { 
-        state: { order: response.data.order }
-      });
+      console.log('Placing order with payload:', orderPayload);
+      
+      const response = await api.post('/orders', orderPayload);
+      
+      console.log('Order response:', response);
+      
+      // API interceptor returns response.data, so response is already unwrapped
+      // Backend returns: { success: true, message: '...', data: { order } }
+      // After interceptor: response = { success: true, message: '...', data: { order } }
+      // Note: API interceptor validateStatus allows 400, so we need to check success flag
+      
+      // Check if response indicates an error (400 validation errors)
+      if (response && response.success === false) {
+        // This is a validation or other error response
+        if (response.errors && Array.isArray(response.errors)) {
+          const validationErrors = response.errors.map(e => e.msg || e.message || e).join(', ');
+          setError(`Validation error: ${validationErrors}`);
+        } else {
+          setError(response.message || 'Invalid order data. Please check your cart and try again.');
+        }
+        setLoading(false);
+        return;
+      }
+      
+      // Check if response is successful and has the expected structure
+      if (response && response.success && response.data && response.data.order) {
+        clearCart();
+        navigate('/order-confirmation', { 
+          state: { order: response.data.order }
+        });
+      } else {
+        // Handle unexpected response structure
+        console.error('Unexpected response structure:', response);
+        setError(response?.message || 'Order was placed but confirmation failed. Please check your orders.');
+        // Don't clear cart if we're not sure the order was created
+        if (response?.success) {
+          clearCart();
+          navigate('/orders');
+        }
+      }
     } catch (err) {
       console.error('Error placing order:', err);
-      setError(err.response?.data?.message || 'Failed to place order. Please try again.');
+      console.error('Error details:', {
+        status: err.response?.status,
+        data: err.response?.data,
+        message: err.message
+      });
+      
+      // Handle different error types
+      if (err.response?.status === 400) {
+        // Validation error
+        if (err.response?.data?.errors && Array.isArray(err.response.data.errors)) {
+          const validationErrors = err.response.data.errors.map(e => e.msg || e.message || e).join(', ');
+          setError(`Validation error: ${validationErrors}`);
+        } else if (err.response?.data?.message) {
+          setError(err.response.data.message);
+        } else {
+          setError('Invalid order data. Please check your cart and try again.');
+        }
+      } else if (err.response?.status === 404) {
+        setError('One or more items in your cart are no longer available. Please update your cart.');
+      } else {
+        const errorMessage = err.response?.data?.message || err.message || 'Failed to place order. Please try again.';
+        setError(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
@@ -180,14 +265,20 @@ const Checkout = () => {
         <Section>
           <SectionTitle>Order Summary</SectionTitle>
           
-          {cartItems.map(item => (
-            <OrderItem key={item.id}>
-              <ItemInfo>
-                <ItemQuantity>{item.quantity}x</ItemQuantity>
-                <ItemName>{item.name}</ItemName>
-              </ItemInfo>
-              <ItemPrice>₦{(item.price * item.quantity).toFixed(2)}</ItemPrice>
-            </OrderItem>
+          {cartItems.map((plate, plateIndex) => (
+            <React.Fragment key={plate.id || plateIndex}>
+              {plate.items && plate.items.map((plateItem, itemIndex) => (
+                <OrderItem key={`${plate.id}-${plateItem.menuItem?.id || itemIndex}`}>
+                  <ItemInfo>
+                    <ItemQuantity>{plateItem.portions || 1}x</ItemQuantity>
+                    <ItemName>{plateItem.menuItem?.name || 'Unknown Item'}</ItemName>
+                  </ItemInfo>
+                  <ItemPrice>
+                    ₦{((plateItem.menuItem?.price || 0) * (plateItem.portions || 1)).toFixed(2)}
+                  </ItemPrice>
+                </OrderItem>
+              ))}
+            </React.Fragment>
           ))}
           
           <Divider />

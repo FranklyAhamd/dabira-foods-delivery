@@ -128,6 +128,7 @@ const PlateCard = ({ onAddMoreClick, isDeliveryOpen, isHidden = false }) => {
 };
 
 const CardContainer = styled.div`
+  /* Mobile styles - bottom full width */
   position: fixed;
   bottom: 100px;
   left: 0;
@@ -144,7 +145,10 @@ const CardContainer = styled.div`
   opacity: ${props => props.$isHidden ? 0 : 1};
   pointer-events: ${props => props.$isHidden ? 'none' : 'auto'};
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  animation: ${props => !props.$isHidden ? 'slideUp 0.25s cubic-bezier(0.4, 0, 0.2, 1)' : 'none'};
+
+  @media (max-width: 767px) {
+    animation: ${props => !props.$isHidden ? 'slideUp 0.25s cubic-bezier(0.4, 0, 0.2, 1)' : 'none'};
+  }
 
   @keyframes slideUp {
     from {
@@ -153,6 +157,36 @@ const CardContainer = styled.div`
     }
     to {
       transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  /* Desktop view - top right positioning */
+  @media (min-width: 768px) {
+    position: fixed !important;
+    top: 80px !important;
+    right: 20px !important;
+    bottom: auto !important;
+    left: auto !important;
+    width: 380px !important;
+    max-width: calc(100vw - 40px) !important;
+    max-height: calc(100vh - 120px) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
+    border-top: none !important;
+    border: 1px solid rgba(102, 126, 234, 0.1) !important;
+    transform: ${props => props.$isHidden ? 'translateX(calc(100% + 20px))' : 'translateX(0)'} !important;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    animation: ${props => !props.$isHidden ? 'slideInRight 0.25s cubic-bezier(0.4, 0, 0.2, 1)' : 'none'} !important;
+  }
+
+  @keyframes slideInRight {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
       opacity: 1;
     }
   }
@@ -195,6 +229,10 @@ const ItemsList = styled.div`
   overflow-y: auto;
   padding: 0.375rem 0.75rem;
   max-height: calc(100vh - 300px);
+
+  @media (min-width: 768px) {
+    max-height: calc(100vh - 400px);
+  }
 `;
 
 const PlateItem = styled.div`
