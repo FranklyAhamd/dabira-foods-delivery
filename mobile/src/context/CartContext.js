@@ -194,6 +194,75 @@ export const CartProvider = ({ children }) => {
     }, 0);
   };
 
+  // Check for unavailable items in cart
+  const getUnavailableItems = () => {
+    if (!cartItems || !Array.isArray(cartItems)) {
+      return [];
+    }
+    
+    const unavailableItems = [];
+    cartItems.forEach(plate => {
+      if (!plate || !plate.items || !Array.isArray(plate.items)) {
+        return;
+      }
+      plate.items.forEach(item => {
+        if (item && item.menuItem && !item.menuItem.available) {
+          unavailableItems.push({
+            ...item,
+            plateId: plate.id
+          });
+        }
+      });
+    });
+    
+    return unavailableItems;
+  };
+
+  // Remove unavailable items from cart
+  const removeUnavailableItems = () => {
+    setCartItems(prevItems =>
+      prevItems.map(plate => {
+        if (!plate || !plate.items || !Array.isArray(plate.items)) {
+          return plate;
+        }
+        const availableItems = plate.items.filter(item => 
+          item && item.menuItem && item.menuItem.available
+        );
+        // If plate becomes empty, return null to filter it out
+        if (availableItems.length === 0) {
+          return null;
+        }
+        return { ...plate, items: availableItems };
+      }).filter(plate => plate !== null)
+    );
+  };
+
+  // Update menu item availability in cart
+  const updateMenuItemAvailability = (menuItemId, available) => {
+    setCartItems(prevItems =>
+      prevItems.map(plate => {
+        if (!plate || !plate.items || !Array.isArray(plate.items)) {
+          return plate;
+        }
+        return {
+          ...plate,
+          items: plate.items.map(item => {
+            if (item && item.menuItem && item.menuItem.id === menuItemId) {
+              return {
+                ...item,
+                menuItem: {
+                  ...item.menuItem,
+                  available
+                }
+              };
+            }
+            return item;
+          })
+        };
+      })
+    );
+  };
+
   const value = {
     cartItems, // Now stores plates
     loading,
@@ -206,7 +275,10 @@ export const CartProvider = ({ children }) => {
     clearCart,
     getTotalPrice,
     getTotalItems,
-    getTotalPlates
+    getTotalPlates,
+    getUnavailableItems, // New - get unavailable items in cart
+    removeUnavailableItems, // New - remove unavailable items
+    updateMenuItemAvailability // New - update menu item availability in cart
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

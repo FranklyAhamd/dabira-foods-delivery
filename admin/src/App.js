@@ -26,7 +26,12 @@ function AppRoutes() {
   const { isAuthenticated } = useAuth();
 
   return (
-    <Router>
+    <Router
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true,
+      }}
+    >
       <GlobalStyles />
       <Routes>
         <Route

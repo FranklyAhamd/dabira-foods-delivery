@@ -20,6 +20,20 @@ const Landing = () => {
   const [closedMessage, setClosedMessage] = useState('');
   const [backgroundImages, setBackgroundImages] = useState([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [currentTaglineIndex, setCurrentTaglineIndex] = useState(0);
+  const [animationType, setAnimationType] = useState('fade');
+
+  // Professional, human taglines
+  const taglines = [
+    "Taste the authentic flavors of Nigeria, delivered fresh to your home",
+    "From our kitchen to your table - traditional Nigerian dishes made with love",
+    "Experience the rich culinary heritage of Nigeria, one meal at a time",
+    "Your favorite Nigerian dishes, prepared fresh and delivered fast",
+    "Bringing the taste of home to your doorstep, every single day",
+    "Authentic recipes, fresh ingredients, and the warmth of Nigerian hospitality",
+    "Discover the authentic taste of Nigeria, crafted with care and tradition",
+    "Savor the flavors of Nigeria - where every meal tells a story"
+  ];
 
   useEffect(() => {
     fetchSettings();
@@ -34,6 +48,18 @@ const Landing = () => {
       if (data.closedMessage) {
         setClosedMessage(data.closedMessage);
       }
+    });
+    
+    // Listen for menu availability changes
+    newSocket.on('menu:availabilityChanged', (data) => {
+      console.log('📢 Menu availability changed:', data);
+      setFeaturedItems(prevItems => 
+        prevItems.map(item => 
+          item.id === data.menuItemId 
+            ? { ...item, available: data.available }
+            : item
+        )
+      );
     });
     
     return () => {
@@ -106,6 +132,22 @@ const Landing = () => {
     }
   }, [backgroundImages.length]);
 
+  // Auto-rotate taglines with different animations
+  useEffect(() => {
+    const animationTypes = ['fade', 'slideLeft', 'slideRight', 'slideUp', 'zoom'];
+    const interval = setInterval(() => {
+      setCurrentTaglineIndex((prevIndex) => {
+        const nextIndex = (prevIndex + 1) % taglines.length;
+        // Randomly select animation type
+        const randomAnimation = animationTypes[Math.floor(Math.random() * animationTypes.length)];
+        setAnimationType(randomAnimation);
+        return nextIndex;
+      });
+    }, 4000); // Change tagline every 4 seconds
+    
+    return () => clearInterval(interval);
+  }, [taglines.length]);
+
   const handleAddToCart = (item, e) => {
     e.stopPropagation();
     
@@ -153,7 +195,17 @@ const Landing = () => {
         {backgroundImages.length > 0 && <ImageOverlay />}
         <HeroContent>
           <HeroTitle $animated>Welcome to {settings?.restaurantName || 'Dabira Foods'}</HeroTitle>
-          <HeroSubtitle $animated>Authentic Nigerian Delicacies Delivered to Your Doorstep</HeroSubtitle>
+          <AnimatedTaglineContainer>
+            {taglines.map((tagline, index) => (
+              <AnimatedTagline
+                key={index}
+                $active={index === currentTaglineIndex}
+                $animationType={animationType}
+              >
+                {tagline}
+              </AnimatedTagline>
+            ))}
+          </AnimatedTaglineContainer>
           
           {!isDeliveryOpen && (
             <DeliveryStatus>
@@ -421,25 +473,99 @@ const HeroTitle = styled.h1`
   }
 `;
 
-const HeroSubtitle = styled.p`
-  font-size: 1.125rem;
-  opacity: 0.95;
-  font-weight: 400;
+const AnimatedTaglineContainer = styled.div`
+  position: relative;
+  min-height: 3rem;
   margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const AnimatedTagline = styled.p`
+  position: absolute;
+  font-size: 1.125rem;
+  opacity: ${props => props.$active ? 1 : 0};
+  font-weight: 400;
   line-height: 1.5;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  animation: ${props => props.$animated ? 'fadeInUp 1s ease-out 0.2s both' : 'none'};
+  text-align: center;
+  width: 100%;
+  transition: opacity 0.5s ease-in-out;
+  pointer-events: none;
   
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(30px);
+  ${props => {
+    if (!props.$active) return '';
+    
+    switch (props.$animationType) {
+      case 'fade':
+        return `
+          animation: fadeIn 0.8s ease-in-out;
+          @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+        `;
+      case 'slideLeft':
+        return `
+          animation: slideInLeft 0.8s ease-out;
+          @keyframes slideInLeft {
+            from { 
+              opacity: 0;
+              transform: translateX(50px);
+            }
+            to { 
+              opacity: 1;
+              transform: translateX(0);
+            }
+          }
+        `;
+      case 'slideRight':
+        return `
+          animation: slideInRight 0.8s ease-out;
+          @keyframes slideInRight {
+            from { 
+              opacity: 0;
+              transform: translateX(-50px);
+            }
+            to { 
+              opacity: 1;
+              transform: translateX(0);
+            }
+          }
+        `;
+      case 'slideUp':
+        return `
+          animation: slideInUp 0.8s ease-out;
+          @keyframes slideInUp {
+            from { 
+              opacity: 0;
+              transform: translateY(30px);
+            }
+            to { 
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+        `;
+      case 'zoom':
+        return `
+          animation: zoomIn 0.8s ease-out;
+          @keyframes zoomIn {
+            from { 
+              opacity: 0;
+              transform: scale(0.8);
+            }
+            to { 
+              opacity: 1;
+              transform: scale(1);
+            }
+          }
+        `;
+      default:
+        return '';
     }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
+  }}
 `;
 
 const DeliveryStatus = styled.div`

@@ -39,6 +39,18 @@ const Home = () => {
       }
     });
     
+    // Listen for menu availability changes
+    newSocket.on('menu:availabilityChanged', (data) => {
+      console.log('📢 Menu availability changed:', data);
+      setMenuItems(prevItems => 
+        prevItems.map(item => 
+          item.id === data.menuItemId 
+            ? { ...item, available: data.available }
+            : item
+        )
+      );
+    });
+    
     // Cleanup socket on unmount
     return () => {
       newSocket.disconnect();

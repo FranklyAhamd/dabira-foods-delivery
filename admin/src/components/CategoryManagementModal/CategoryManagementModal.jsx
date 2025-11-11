@@ -117,7 +117,6 @@ const CategoryItem = styled.div`
   border: 1px solid #e5e7eb;
   border-radius: 4px;
   transition: all 0.15s;
-  height: 22px;
   min-height: 22px;
 
   &:hover {
@@ -175,6 +174,7 @@ const EditForm = styled.div`
   align-items: center;
   flex: 1;
   min-width: 0;
+  width: 100%;
 `;
 
 const EditInput = styled.input`
@@ -247,33 +247,67 @@ const EmptyMessage = styled.div`
   font-size: 13px;
 `;
 
+const CheckboxContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 4px 0;
+`;
+
+const Checkbox = styled.input`
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #FF6B35;
+`;
+
+const CheckboxLabel = styled.label`
+  font-size: 11px;
+  color: #374151;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 500;
+`;
+
 const CategoryManagementModal = ({ isOpen, onClose, categories, onCategoriesChange }) => {
   const { success, error } = useToast();
   const [localCategories, setLocalCategories] = useState([]);
   const [editingCategory, setEditingCategory] = useState(null);
   const [editValue, setEditValue] = useState('');
+  const [editIsTakeaway, setEditIsTakeaway] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newCategory, setNewCategory] = useState('');
+  const [newIsTakeaway, setNewIsTakeaway] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, category: null });
 
   useEffect(() => {
     if (isOpen) {
-      setLocalCategories([...categories]);
+      // Normalize categories - handle both string and object formats
+      const normalized = categories.map(cat => 
+        typeof cat === 'string' ? { name: cat, isTakeaway: false } : cat
+      );
+      setLocalCategories(normalized);
       setEditingCategory(null);
       setEditValue('');
+      setEditIsTakeaway(false);
       setShowAddForm(false);
       setNewCategory('');
+      setNewIsTakeaway(false);
     }
   }, [isOpen, categories]);
 
   const handleEdit = (category) => {
-    setEditingCategory(category);
-    setEditValue(category);
+    const catObj = typeof category === 'string' ? { name: category, isTakeaway: false } : category;
+    setEditingCategory(catObj.name);
+    setEditValue(catObj.name);
+    setEditIsTakeaway(catObj.isTakeaway || false);
   };
 
   const handleCancelEdit = () => {
     setEditingCategory(null);
     setEditValue('');
+    setEditIsTakeaway(false);
   };
 
   const handleSaveEdit = async () => {
@@ -282,29 +316,41 @@ const CategoryManagementModal = ({ isOpen, onClose, categories, onCategoriesChan
       return;
     }
 
-    if (editValue.trim() === editingCategory) {
-      handleCancelEdit();
-      return;
-    }
+    const categoryName = typeof editingCategory === 'string' ? editingCategory : editingCategory.name;
+    const isNameChanged = editValue.trim() !== categoryName;
 
-    // Check if new name already exists
-    if (localCategories.some(cat => cat.toLowerCase() === editValue.trim().toLowerCase() && cat !== editingCategory)) {
+    // Check if new name already exists (only if name changed)
+    if (isNameChanged && localCategories.some(cat => {
+      const catName = typeof cat === 'string' ? cat : cat.name;
+      return catName.toLowerCase() === editValue.trim().toLowerCase() && catName !== categoryName;
+    })) {
       error('Category with this name already exists');
       return;
     }
 
     try {
-      // Update all menu items with the old category to the new category
+      // Update category - if name changed, update menu items too
       const response = await api.put('/menu/update-category', {
-        oldCategory: editingCategory,
-        newCategory: editValue.trim()
+        oldCategory: categoryName,
+        newCategory: editValue.trim(),
+        isTakeaway: editIsTakeaway
       });
 
       if (response.success) {
+        // Also save/update the category in Category model
+        await api.post('/menu/category', {
+          name: editValue.trim(),
+          isTakeaway: editIsTakeaway
+        });
+
         success('Category updated successfully');
-        const updated = localCategories.map(cat => 
-          cat === editingCategory ? editValue.trim() : cat
-        );
+        const updated = localCategories.map(cat => {
+          const catName = typeof cat === 'string' ? cat : cat.name;
+          if (catName === categoryName) {
+            return { name: editValue.trim(), isTakeaway: editIsTakeaway };
+          }
+          return typeof cat === 'string' ? { name: cat, isTakeaway: false } : cat;
+        });
         setLocalCategories(updated);
         onCategoriesChange(updated);
         handleCancelEdit();
@@ -315,56 +361,72 @@ const CategoryManagementModal = ({ isOpen, onClose, categories, onCategoriesChan
   };
 
   const handleDeleteClick = (category) => {
-    setDeleteConfirm({ isOpen: true, category });
+    const catName = typeof category === 'string' ? category : category.name;
+    setDeleteConfirm({ isOpen: true, category: catName });
   };
 
   const handleDeleteConfirm = async () => {
     if (!deleteConfirm.category) return;
 
     try {
-      // Check if category is in use
-      const menuResponse = await api.get('/menu');
-      if (menuResponse.success) {
-        const itemsUsingCategory = menuResponse.data.menuItems.filter(
-          item => item.category === deleteConfirm.category
-        );
+      // Delete from backend
+      const response = await api.delete('/menu/category', {
+        data: { name: deleteConfirm.category }
+      });
 
-        if (itemsUsingCategory.length > 0) {
-          error(`Cannot delete category. ${itemsUsingCategory.length} menu item(s) are using this category.`);
-          setDeleteConfirm({ isOpen: false, category: null });
-          return;
-        }
+      if (response.success) {
+        // Remove from local list
+        const updated = localCategories.filter(cat => {
+          const catName = typeof cat === 'string' ? cat : cat.name;
+          return catName !== deleteConfirm.category;
+        });
+        setLocalCategories(updated);
+        onCategoriesChange(updated);
+        success('Category removed successfully');
+        setDeleteConfirm({ isOpen: false, category: null });
       }
-
-      // If no items use it, just remove from local list
-      const updated = localCategories.filter(cat => cat !== deleteConfirm.category);
-      setLocalCategories(updated);
-      onCategoriesChange(updated);
-      success('Category removed successfully');
-      setDeleteConfirm({ isOpen: false, category: null });
     } catch (err) {
       error(err.response?.data?.message || 'Error deleting category');
       setDeleteConfirm({ isOpen: false, category: null });
     }
   };
 
-  const handleAddCategory = () => {
+  const handleAddCategory = async () => {
     if (!newCategory.trim()) {
       error('Category name cannot be empty');
       return;
     }
 
-    if (localCategories.some(cat => cat.toLowerCase() === newCategory.trim().toLowerCase())) {
+    if (localCategories.some(cat => {
+      const catName = typeof cat === 'string' ? cat : cat.name;
+      return catName.toLowerCase() === newCategory.trim().toLowerCase();
+    })) {
       error('Category with this name already exists');
       return;
     }
 
-    const updated = [...localCategories, newCategory.trim()].sort();
-    setLocalCategories(updated);
-    onCategoriesChange(updated);
-    setNewCategory('');
-    setShowAddForm(false);
-    success('Category added successfully');
+    try {
+      // Save category to backend
+      await api.post('/menu/category', {
+        name: newCategory.trim(),
+        isTakeaway: newIsTakeaway
+      });
+
+      const newCat = { name: newCategory.trim(), isTakeaway: newIsTakeaway };
+      const updated = [...localCategories, newCat].sort((a, b) => {
+        const aName = typeof a === 'string' ? a : a.name;
+        const bName = typeof b === 'string' ? b : b.name;
+        return aName.localeCompare(bName);
+      });
+      setLocalCategories(updated);
+      onCategoriesChange(updated);
+      setNewCategory('');
+      setNewIsTakeaway(false);
+      setShowAddForm(false);
+      success('Category added successfully');
+    } catch (err) {
+      error(err.response?.data?.message || 'Error adding category');
+    }
   };
 
   if (!isOpen) return null;
@@ -386,25 +448,42 @@ const CategoryManagementModal = ({ isOpen, onClose, categories, onCategoriesChan
               </AddButton>
             ) : (
               <AddForm>
-                <EditInput
-                  type="text"
-                  value={newCategory}
-                  onChange={(e) => setNewCategory(e.target.value)}
-                  placeholder="Enter category name"
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') handleAddCategory();
-                    if (e.key === 'Escape') {
-                      setShowAddForm(false);
-                      setNewCategory('');
-                    }
-                  }}
-                  autoFocus
-                />
-                <SaveButton onClick={handleAddCategory}>Add</SaveButton>
-                <CancelEditButton onClick={() => {
-                  setShowAddForm(false);
-                  setNewCategory('');
-                }}>Cancel</CancelEditButton>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <EditInput
+                    type="text"
+                    value={newCategory}
+                    onChange={(e) => setNewCategory(e.target.value)}
+                    placeholder="Enter category name"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') handleAddCategory();
+                      if (e.key === 'Escape') {
+                        setShowAddForm(false);
+                        setNewCategory('');
+                        setNewIsTakeaway(false);
+                      }
+                    }}
+                    autoFocus
+                  />
+                  <CheckboxContainer>
+                    <Checkbox
+                      type="checkbox"
+                      id="new-takeaway"
+                      checked={newIsTakeaway}
+                      onChange={(e) => setNewIsTakeaway(e.target.checked)}
+                    />
+                    <CheckboxLabel htmlFor="new-takeaway">
+                      This is a takeaway category
+                    </CheckboxLabel>
+                  </CheckboxContainer>
+                </div>
+                <div style={{ display: 'flex', gap: '4px', alignItems: 'flex-start' }}>
+                  <SaveButton onClick={handleAddCategory}>Add</SaveButton>
+                  <CancelEditButton onClick={() => {
+                    setShowAddForm(false);
+                    setNewCategory('');
+                    setNewIsTakeaway(false);
+                  }}>Cancel</CancelEditButton>
+                </div>
               </AddForm>
             )}
 
@@ -412,26 +491,49 @@ const CategoryManagementModal = ({ isOpen, onClose, categories, onCategoriesChan
               <EmptyMessage>No categories yet. Add your first category!</EmptyMessage>
             ) : (
               <CategoryList>
-                {localCategories.map((category) => (
-                  <CategoryItem key={category}>
-                    {editingCategory === category ? (
-                      <EditForm>
-                        <EditInput
-                          type="text"
-                          value={editValue}
-                          onChange={(e) => setEditValue(e.target.value)}
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter') handleSaveEdit();
-                            if (e.key === 'Escape') handleCancelEdit();
-                          }}
-                          autoFocus
-                        />
-                        <SaveButton onClick={handleSaveEdit}>Save</SaveButton>
-                        <CancelEditButton onClick={handleCancelEdit}>Cancel</CancelEditButton>
+                {localCategories.map((category) => {
+                  const categoryName = typeof category === 'string' ? category : category.name;
+                  return (
+                  <CategoryItem key={categoryName}>
+                    {editingCategory === (typeof category === 'string' ? category : category.name) ? (
+                      <EditForm style={{ flexDirection: 'column', gap: '8px', width: '100%' }}>
+                        <div style={{ display: 'flex', gap: '4px', width: '100%' }}>
+                          <EditInput
+                            type="text"
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') handleSaveEdit();
+                              if (e.key === 'Escape') handleCancelEdit();
+                            }}
+                            autoFocus
+                            style={{ flex: 1 }}
+                          />
+                          <SaveButton onClick={handleSaveEdit}>Save</SaveButton>
+                          <CancelEditButton onClick={handleCancelEdit}>Cancel</CancelEditButton>
+                        </div>
+                        <CheckboxContainer>
+                          <Checkbox
+                            type="checkbox"
+                            id={`takeaway-${editValue}`}
+                            checked={editIsTakeaway}
+                            onChange={(e) => setEditIsTakeaway(e.target.checked)}
+                          />
+                          <CheckboxLabel htmlFor={`takeaway-${editValue}`}>
+                            This is a takeaway category
+                          </CheckboxLabel>
+                        </CheckboxContainer>
                       </EditForm>
                     ) : (
                       <>
-                        <CategoryName>{category}</CategoryName>
+                        <CategoryName>
+                          {typeof category === 'string' ? category : category.name}
+                          {(typeof category === 'object' && category.isTakeaway) && (
+                            <span style={{ marginLeft: '6px', fontSize: '9px', color: '#FF6B35', fontWeight: '600' }}>
+                              (Takeaway)
+                            </span>
+                          )}
+                        </CategoryName>
                         <CategoryActions>
                           <ActionButton $edit onClick={() => handleEdit(category)}>
                             <FiEdit />
@@ -443,7 +545,8 @@ const CategoryManagementModal = ({ isOpen, onClose, categories, onCategoriesChan
                       </>
                     )}
                   </CategoryItem>
-                ))}
+                  );
+                })}
               </CategoryList>
             )}
           </ModalBody>

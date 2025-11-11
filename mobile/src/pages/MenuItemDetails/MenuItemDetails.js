@@ -34,10 +34,24 @@ const MenuItemDetails = () => {
       }
     });
     
+    // Listen for menu availability changes
+    newSocket.on('menu:availabilityChanged', (data) => {
+      console.log('📢 Menu availability changed:', data);
+      setItem(prevItem => {
+        if (prevItem && prevItem.id === data.menuItemId) {
+          return { ...prevItem, available: data.available };
+        }
+        return prevItem;
+      });
+    });
+    
     return () => {
-      newSocket.disconnect();
+      if (newSocket && newSocket.connected) {
+        newSocket.removeAllListeners();
+        newSocket.disconnect();
+      }
     };
-  }, [id]);
+  }, [id]); // Only depend on id, not item
 
   const fetchItemDetails = async () => {
     try {

@@ -15,7 +15,7 @@ import {
 
 const MainLayout = () => {
   const location = useLocation();
-  const { getTotalItems } = useCart();
+  const { getTotalPlates } = useCart();
   const { isAuthenticated } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -31,8 +31,8 @@ const MainLayout = () => {
         <HeaderRight>
           <CartLink to="/cart">
             <FiShoppingCart size={24} />
-            {getTotalItems() > 0 && (
-              <CartBadge>{getTotalItems()}</CartBadge>
+            {getTotalPlates() > 0 && (
+              <CartBadge>{getTotalPlates()}</CartBadge>
             )}
           </CartLink>
           <MenuButton onClick={() => setMenuOpen(!menuOpen)}>
@@ -112,8 +112,8 @@ const MainLayout = () => {
         <NavItem to="/cart" $active={isActive('/cart')}>
           <NavIcon>
             <FiShoppingCart size={20} />
-            {getTotalItems() > 0 && (
-              <NavBadge>{getTotalItems()}</NavBadge>
+            {getTotalPlates() > 0 && (
+              <NavBadge>{getTotalPlates()}</NavBadge>
             )}
           </NavIcon>
           <NavLabel>Cart</NavLabel>
@@ -294,7 +294,7 @@ const MenuItem = styled.li`
 
 const MainContent = styled.main`
   flex: 1;
-  padding-bottom: 70px; /* Space for bottom nav */
+  padding-bottom: 60px; /* Space for bottom nav */
   overflow-y: auto;
 `;
 
@@ -308,8 +308,8 @@ const BottomNav = styled.nav`
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  box-shadow: 0 -8px 32px rgba(102, 126, 234, 0.15);
-  padding: 0.75rem 0 max(0.75rem, env(safe-area-inset-bottom));
+  box-shadow: 0 -4px 16px rgba(102, 126, 234, 0.1);
+  padding: 0.5rem 0 max(0.5rem, env(safe-area-inset-bottom));
   z-index: 100;
   border-top: 1px solid rgba(255, 255, 255, 0.5);
 `;
@@ -318,17 +318,17 @@ const NavItem = styled(Link)`
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.5rem 1rem;
+  gap: 0.125rem;
+  padding: 0.375rem 0.75rem;
   color: ${props => props.$active ? '#667eea' : '#666'};
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: ${props => props.$active ? '600' : '500'};
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
 
   &:hover {
     color: #667eea;
-    transform: translateY(-2px);
+    transform: translateY(-1px);
   }
   
   ${props => props.$active && `
@@ -338,21 +338,22 @@ const NavItem = styled(Link)`
       top: 0;
       left: 50%;
       transform: translateX(-50%);
-      width: 40px;
-      height: 3px;
+      width: 32px;
+      height: 2px;
       background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-      border-radius: 0 0 4px 4px;
+      border-radius: 0 0 3px 3px;
     }
   `}
 `;
 
 const NavIcon = styled.span`
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   position: relative;
 `;
 
 const NavLabel = styled.span`
-  font-size: 0.75rem;
+  font-size: 0.625rem;
+  line-height: 1.2;
 `;
 
 const NavBadge = styled.span`

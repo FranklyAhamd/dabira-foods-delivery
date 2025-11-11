@@ -20,7 +20,6 @@ import {
   FormGroup,
   Label,
   Input,
-  TextArea,
   Select,
   ButtonGroup,
   SubmitButton,
@@ -47,7 +46,8 @@ const MenuManagement = () => {
     price: '',
     category: '',
     image: '',
-    available: true
+    available: true,
+    maxPortionsPerTakeaway: ''
   });
 
   useEffect(() => {
@@ -72,11 +72,22 @@ const MenuManagement = () => {
     try {
       const response = await api.get('/menu/categories');
       if (response.success) {
+        // Categories are now objects with { name, isTakeaway }
         setCategories(response.data.categories || []);
       }
     } catch (error) {
       console.error('Error fetching categories:', error);
     }
+  };
+
+  // Check if selected category is a takeaway category
+  const isSelectedCategoryTakeaway = () => {
+    if (!formData.category) return false;
+    const selectedCat = categories.find(cat => {
+      const catName = typeof cat === 'string' ? cat : cat.name;
+      return catName === formData.category;
+    });
+    return selectedCat && typeof selectedCat === 'object' && selectedCat.isTakeaway;
   };
 
   const handleOpenModal = (item = null) => {
@@ -87,7 +98,8 @@ const MenuManagement = () => {
         price: item.price,
         category: item.category,
         image: item.image || '',
-        available: item.available
+        available: item.available,
+        maxPortionsPerTakeaway: item.maxPortionsPerTakeaway || ''
       });
     } else {
       setEditingItem(null);
@@ -96,7 +108,8 @@ const MenuManagement = () => {
         price: '',
         category: '',
         image: '',
-        available: true
+        available: true,
+        maxPortionsPerTakeaway: ''
       });
     }
     setShowModal(true);
@@ -112,16 +125,29 @@ const MenuManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Validate maxPortionsPerTakeaway for takeaway categories
+    if (isSelectedCategoryTakeaway() && !formData.maxPortionsPerTakeaway) {
+      error('Maximum portions per takeaway is required for takeaway categories');
+      return;
+    }
+
     try {
+      const submitData = {
+        ...formData,
+        maxPortionsPerTakeaway: isSelectedCategoryTakeaway() && formData.maxPortionsPerTakeaway 
+          ? parseInt(formData.maxPortionsPerTakeaway) 
+          : null
+      };
+
       if (editingItem) {
-        const response = await api.put(`/menu/${editingItem.id}`, formData);
+        const response = await api.put(`/menu/${editingItem.id}`, submitData);
         if (response.success) {
           success('Menu item updated successfully');
           fetchMenuItems();
           handleCloseModal();
         }
       } else {
-        const response = await api.post('/menu', formData);
+        const response = await api.post('/menu', submitData);
         if (response.success) {
           success('Menu item created successfully');
           fetchMenuItems();
@@ -247,16 +273,35 @@ const MenuManagement = () => {
                   {categories.length > 0 ? (
                     <Select
                       value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      onChange={(e) => {
+                        const newCategory = e.target.value;
+                        // Check if new category is takeaway
+                        const selectedCat = categories.find(cat => {
+                          const catName = typeof cat === 'string' ? cat : cat.name;
+                          return catName === newCategory;
+                        });
+                        const isTakeaway = selectedCat && typeof selectedCat === 'object' && selectedCat.isTakeaway;
+                        
+                        setFormData({ 
+                          ...formData, 
+                          category: newCategory,
+                          // Clear maxPortionsPerTakeaway if category is not takeaway
+                          maxPortionsPerTakeaway: isTakeaway ? formData.maxPortionsPerTakeaway : ''
+                        });
+                      }}
                       required
                       style={{ flex: 1 }}
                     >
                       <option value="">Select a category</option>
-                      {categories.map((category) => (
-                        <option key={category} value={category}>
-                          {category}
-                        </option>
-                      ))}
+                      {categories.map((category) => {
+                        const catName = typeof category === 'string' ? category : category.name;
+                        const isTakeaway = typeof category === 'object' && category.isTakeaway;
+                        return (
+                          <option key={catName} value={catName}>
+                            {catName}{isTakeaway ? ' (Takeaway)' : ''}
+                          </option>
+                        );
+                      })}
                     </Select>
                   ) : (
                     <Input
@@ -298,6 +343,24 @@ const MenuManagement = () => {
                   placeholder="https://example.com/image.jpg"
                 />
               </FormGroup>
+
+              {isSelectedCategoryTakeaway() && (
+                <FormGroup>
+                  <Label>Maximum Portions Per Takeaway *</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={formData.maxPortionsPerTakeaway}
+                    onChange={(e) => setFormData({ ...formData, maxPortionsPerTakeaway: e.target.value })}
+                    placeholder="e.g., 3"
+                    required
+                  />
+                  <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+                    Maximum number of portions that can fit in one takeaway plate
+                  </div>
+                </FormGroup>
+              )}
 
               <FormGroup>
                 <Label>Available</Label>
@@ -343,10 +406,16 @@ const MenuManagement = () => {
         categories={categories}
         onCategoriesChange={(updatedCategories) => {
           setCategories(updatedCategories);
-          // If the selected category was renamed, update it
-          if (formData.category && !updatedCategories.includes(formData.category)) {
-            // Category was deleted, clear selection
-            setFormData({ ...formData, category: '' });
+          // If the selected category was renamed or deleted, handle it
+          if (formData.category) {
+            const categoryExists = updatedCategories.some(cat => {
+              const catName = typeof cat === 'string' ? cat : cat.name;
+              return catName === formData.category;
+            });
+            if (!categoryExists) {
+              // Category was deleted, clear selection and maxPortionsPerTakeaway
+              setFormData({ ...formData, category: '', maxPortionsPerTakeaway: '' });
+            }
           }
         }}
       />

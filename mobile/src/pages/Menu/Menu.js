@@ -8,6 +8,7 @@ import { usePlate } from '../../context/PlateContext';
 import { useToast } from '../../context/ToastContext';
 import PortionModal from '../../components/PortionModal/PortionModal';
 import PlateCard from '../../components/PlateCard/PlateCard';
+import PlateFilledAlert from '../../components/PlateFilledAlert/PlateFilledAlert';
 import { FiSearch, FiPlus, FiRefreshCw } from 'react-icons/fi';
 
 const Menu = () => {
@@ -25,6 +26,9 @@ const Menu = () => {
   const { createPlate, addItemToPlate, currentPlate } = usePlate();
   const [selectedItem, setSelectedItem] = useState(null);
   const [showPortionModal, setShowPortionModal] = useState(false);
+  const [isPlateCardHidden, setIsPlateCardHidden] = useState(false);
+  const [showPlateFilledAlert, setShowPlateFilledAlert] = useState(false);
+  const [filledPlateNumber, setFilledPlateNumber] = useState(1);
 
   useEffect(() => {
     fetchDeliveryStatus();
@@ -42,6 +46,18 @@ const Menu = () => {
       if (data.closedMessage) {
         setClosedMessage(data.closedMessage);
       }
+    });
+    
+    // Listen for menu availability changes
+    newSocket.on('menu:availabilityChanged', (data) => {
+      console.log('📢 Menu availability changed:', data);
+      setMenuItems(prevItems => 
+        prevItems.map(item => 
+          item.id === data.menuItemId 
+            ? { ...item, available: data.available }
+            : item
+        )
+      );
     });
     
     // Cleanup socket on unmount
@@ -93,7 +109,11 @@ const Menu = () => {
       const fetchedCategories = Array.isArray(response?.data?.categories)
         ? response.data.categories
         : [];
-      setCategories(['All', ...fetchedCategories]);
+      // Categories are now objects with { name, isTakeaway }, extract names for filtering
+      const categoryNames = fetchedCategories.map(cat => 
+        typeof cat === 'string' ? cat : cat.name
+      );
+      setCategories(['All', ...categoryNames]);
     } catch (err) {
       console.error('Error fetching categories:', err);
     }
@@ -126,17 +146,48 @@ const Menu = () => {
   };
 
   const handlePortionConfirm = (menuItem, portions) => {
+    let result;
     if (currentPlate) {
-      // Add to existing plate
-      addItemToPlate(menuItem, portions);
+      // Add to existing plate - this may create a new plate if limit is exceeded
+      result = addItemToPlate(menuItem, portions);
     } else {
       // Create new plate
-      createPlate(menuItem, portions);
+      const newPlate = createPlate(menuItem, portions);
+      result = { plate: newPlate, newPlateCreated: false };
     }
+    
+    // Check if a new plate was created (takeaway limit exceeded)
+    if (result.newPlateCreated) {
+      setFilledPlateNumber(result.filledPlateNumber);
+      setShowPlateFilledAlert(true);
+    }
+    
+    // Show the PlateCard again when an item is added
+    setIsPlateCardHidden(false);
+    // Modal will close automatically via onClose callback in handleConfirm
   };
 
-  const handleAddMoreClick = () => {
-    setShowPortionModal(true);
+  // Check if we're editing a plate from cart
+  useEffect(() => {
+    if (currentPlate && currentPlate.items.length > 0) {
+      // If there's a current plate, it means we're either creating or editing
+      // The PlateCard will handle adding it back to cart
+    }
+  }, [currentPlate]);
+
+  const handleAddMoreClick = (e) => {
+    // Hide the PlateCard so the menu is fully visible
+    setIsPlateCardHidden(true);
+    
+    // Scroll to the top of the menu to allow users to select more items
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+    
+    // Also close the portion modal if it's open
+    setShowPortionModal(false);
+    setSelectedItem(null);
   };
 
   if (loading) {
@@ -305,25 +356,33 @@ const Menu = () => {
         </ProductsGrid>
       )}
 
-      {/* Portion Modal */}
-      <PortionModal
-        isOpen={showPortionModal}
-        onClose={() => {
-          setShowPortionModal(false);
-          setSelectedItem(null);
-        }}
-        menuItem={selectedItem}
-        onConfirm={handlePortionConfirm}
-        isDeliveryOpen={isDeliveryOpen}
-      />
+              {/* Portion Modal */}
+              <PortionModal
+                isOpen={showPortionModal}
+                onClose={() => {
+                  setShowPortionModal(false);
+                  setSelectedItem(null);
+                }}
+                menuItem={selectedItem}
+                onConfirm={handlePortionConfirm}
+                isDeliveryOpen={isDeliveryOpen}
+              />
 
       {/* Plate Card */}
       {currentPlate && currentPlate.items.length > 0 && (
         <PlateCard
           onAddMoreClick={handleAddMoreClick}
           isDeliveryOpen={isDeliveryOpen}
+          isHidden={isPlateCardHidden}
         />
       )}
+
+      {/* Plate Filled Alert */}
+      <PlateFilledAlert
+        isOpen={showPlateFilledAlert}
+        onClose={() => setShowPlateFilledAlert(false)}
+        plateNumber={filledPlateNumber}
+      />
     </Container>
   );
 };

@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import io from 'socket.io-client';
 import { useCart } from '../../context/CartContext';
+import { usePlate } from '../../context/PlateContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import api, { API_URL } from '../../config/api';
+import UnavailableItemsAlert from '../../components/UnavailableItemsAlert/UnavailableItemsAlert';
 import { 
   FiShoppingCart, 
   FiTrash2, 
@@ -17,12 +19,24 @@ import {
 
 const Cart = () => {
   const navigate = useNavigate();
-  const { cartItems, updatePlateItemPortions, removeFromCart, removePlateItem, clearCart, getTotalPrice } = useCart();
+  const { 
+    cartItems, 
+    updatePlateItemPortions, 
+    removeFromCart, 
+    removePlateItem, 
+    clearCart, 
+    getTotalPrice,
+    getUnavailableItems,
+    removeUnavailableItems,
+    updateMenuItemAvailability
+  } = useCart();
+  const { loadPlate } = usePlate();
   const { isAuthenticated } = useAuth();
   const { warning } = useToast();
   const [isDeliveryOpen, setIsDeliveryOpen] = useState(true);
   const [closedMessage, setClosedMessage] = useState('');
   const [expandedPlate, setExpandedPlate] = useState(null);
+  const [showUnavailableAlert, setShowUnavailableAlert] = useState(false);
 
   useEffect(() => {
     fetchDeliveryStatus();
@@ -38,10 +52,36 @@ const Cart = () => {
       }
     });
     
+    // Listen for menu availability changes
+    newSocket.on('menu:availabilityChanged', (data) => {
+      console.log('📢 Menu availability changed in cart:', data);
+      // Update the menu item availability in cart
+      updateMenuItemAvailability(data.menuItemId, data.available);
+      
+      // If item became unavailable, show alert after a short delay to allow cart update
+      if (!data.available) {
+        setTimeout(() => {
+          const unavailableItems = getUnavailableItems();
+          if (unavailableItems.length > 0) {
+            setShowUnavailableAlert(true);
+          }
+        }, 100);
+      }
+    });
+    
     return () => {
       newSocket.disconnect();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Check for unavailable items on mount and when cart changes
+  useEffect(() => {
+    const unavailableItems = getUnavailableItems();
+    if (unavailableItems.length > 0 && !showUnavailableAlert) {
+      setShowUnavailableAlert(true);
+    }
+  }, [cartItems, showUnavailableAlert]);
 
   const fetchDeliveryStatus = async () => {
     try {
@@ -88,6 +128,33 @@ const Cart = () => {
     navigate('/checkout', { state: { isGuest: false } });
   };
 
+  const handleRemoveUnavailableItems = () => {
+    removeUnavailableItems();
+    setShowUnavailableAlert(false);
+  };
+
+  const handleViewCart = () => {
+    setShowUnavailableAlert(false);
+    // Scroll to top of cart
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleEditPlate = (plate) => {
+    if (!isDeliveryOpen) {
+      warning(closedMessage || 'Delivery is currently closed. Orders cannot be placed at this time.');
+      return;
+    }
+    
+    // Load the plate into PlateContext for editing
+    loadPlate(plate);
+    // Remove the plate from cart temporarily (it will be added back when user saves)
+    removeFromCart(plate.id);
+    // Navigate to menu page with state to indicate we're editing
+    navigate('/menu', { state: { editingPlate: true } });
+  };
+
+  const unavailableItems = getUnavailableItems();
+
   if (cartItems.length === 0) {
     return (
       <EmptyContainer>
@@ -105,6 +172,13 @@ const Cart = () => {
 
   return (
     <Container>
+      <UnavailableItemsAlert
+        isOpen={showUnavailableAlert && unavailableItems.length > 0}
+        onClose={() => setShowUnavailableAlert(false)}
+        unavailableItems={unavailableItems}
+        onViewCart={handleViewCart}
+        onRemoveItems={handleRemoveUnavailableItems}
+      />
       <Header>
         <Title>My Cart</Title>
         <ClearButton onClick={clearCart}>Clear All</ClearButton>
@@ -150,7 +224,7 @@ const Cart = () => {
                 </PlateInfo>
                 
                 <PlateActions onClick={(e) => e.stopPropagation()}>
-                  <EditButton onClick={() => {/* TODO: Implement edit functionality */}}>
+                  <EditButton onClick={() => handleEditPlate(plate)} disabled={!isDeliveryOpen}>
                     <FiEdit size={16} />
                   </EditButton>
                   <DeleteButton onClick={() => removeFromCart(plate.id)}>
@@ -161,8 +235,8 @@ const Cart = () => {
               
               {isExpanded && (
                 <ExpandedContent>
-                  {plate.items.map(item => (
-                    <CompactCartItem key={item.menuItem.id}>
+                  {plate.items.map((item, itemIndex) => (
+                    <CompactCartItem key={`${item.menuItem.id}-${itemIndex}`}>
                       <ItemImageCompact 
                         src={item.menuItem.image || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50"><rect width="50" height="50" fill="#f0f0f0"/></svg>'}
                         alt={item.menuItem.name}
@@ -269,7 +343,7 @@ const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.25rem 1.5rem;
+  padding: 0.875rem 1rem;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   box-shadow: 0 4px 20px rgba(102, 126, 234, 0.25);
@@ -290,7 +364,7 @@ const Header = styled.div`
 `;
 
 const Title = styled.h2`
-  font-size: 1.625rem;
+  font-size: 1.25rem;
   font-weight: 800;
   color: white;
   letter-spacing: -0.5px;
@@ -300,11 +374,11 @@ const Title = styled.h2`
 
 const ClearButton = styled.button`
   color: white;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   background: rgba(255, 255, 255, 0.25);
-  padding: 0.625rem 1rem;
-  border-radius: 10px;
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
   backdrop-filter: blur(10px);
   border: none;
   transition: all 0.2s;
@@ -319,23 +393,23 @@ const ClearButton = styled.button`
 
 const ItemsList = styled.div`
   flex: 1;
-  padding: 1rem;
+  padding: 0.75rem;
   overflow-y: auto;
-  padding-bottom: 1.5rem;
+  padding-bottom: 1rem;
 `;
 
 const PlateWrapper = styled.div`
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 `;
 
 const CompactPlateCard = styled.div`
   background: white;
-  border-radius: 16px;
-  padding: 1rem;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  padding: 0.75rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border: ${props => props.$expanded ? '2px solid #667eea' : '2px solid transparent'};
@@ -348,7 +422,7 @@ const CompactPlateCard = styled.div`
     top: 0;
     left: 0;
     right: 0;
-    height: 3px;
+    height: 2px;
     background: ${props => props.$expanded 
       ? 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)' 
       : 'transparent'};
@@ -362,31 +436,31 @@ const CompactPlateCard = styled.div`
 `;
 
 const PlateSVGContainer = styled.div`
-  width: 60px;
-  height: 60px;
+  width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   position: relative;
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-radius: 12px;
-  padding: 0.5rem;
+  border-radius: 10px;
+  padding: 0.375rem;
 `;
 
 const PlateNumberBadge = styled.div`
   position: absolute;
-  top: -4px;
-  right: -4px;
+  top: -3px;
+  right: -3px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  font-size: 0.625rem;
+  font-size: 0.5625rem;
   font-weight: 800;
-  padding: 0.25rem 0.375rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+  padding: 0.2rem 0.3rem;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(102, 126, 234, 0.4);
   z-index: 2;
-  min-width: 24px;
+  min-width: 20px;
   text-align: center;
   line-height: 1;
 `;
@@ -401,11 +475,11 @@ const PlateInfo = styled.div`
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
+  gap: 0.25rem;
 `;
 
 const PlateTotalCompact = styled.div`
-  font-size: 1.125rem;
+  font-size: 0.9375rem;
   font-weight: 700;
   font-family: 'Space Grotesk', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -416,41 +490,53 @@ const PlateTotalCompact = styled.div`
 `;
 
 const PlateItemsCount = styled.div`
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   color: #6c757d;
   font-weight: 500;
 `;
 
 const PlateActions = styled.div`
   display: flex;
-  gap: 0.625rem;
+  gap: 0.5rem;
   flex-shrink: 0;
 `;
 
 const EditButton = styled.button`
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #f0f4ff 0%, #e8edff 100%);
-  color: #667eea;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: ${props => props.disabled 
+    ? 'linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%)' 
+    : 'linear-gradient(135deg, #f0f4ff 0%, #e8edff 100%)'};
+  color: ${props => props.disabled ? '#9ca3af' : '#667eea'};
   display: flex;
   align-items: center;
   justify-content: center;
   border: none;
-  box-shadow: 0 2px 6px rgba(102, 126, 234, 0.15);
+  box-shadow: ${props => props.disabled ? 'none' : '0 2px 6px rgba(102, 126, 234, 0.15)'};
   transition: all 0.2s;
+  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
   
-  &:active {
+  &:active:not(:disabled) {
     background: linear-gradient(135deg, #e0e8ff 0%, #d8e0ff 100%);
     transform: scale(0.92);
     box-shadow: 0 1px 3px rgba(102, 126, 234, 0.2);
   }
+  
+  &:disabled {
+    opacity: 0.6;
+  }
+  
+  svg {
+    width: 14px;
+    height: 14px;
+  }
 `;
 
 const DeleteButton = styled.button`
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%);
   color: #ef4444;
   display: flex;
@@ -465,13 +551,18 @@ const DeleteButton = styled.button`
     transform: scale(0.92);
     box-shadow: 0 1px 3px rgba(239, 68, 68, 0.2);
   }
+  
+  svg {
+    width: 14px;
+    height: 14px;
+  }
 `;
 
 const ExpandedContent = styled.div`
-  margin-top: 0.75rem;
-  padding: 0.75rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
   background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-  border-radius: 12px;
+  border-radius: 10px;
   border: 1px solid rgba(102, 126, 234, 0.1);
   animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   
@@ -489,12 +580,12 @@ const ExpandedContent = styled.div`
 
 const CompactCartItem = styled.div`
   display: flex;
-  gap: 0.75rem;
+  gap: 0.5rem;
   background: white;
-  padding: 0.75rem;
-  border-radius: 10px;
-  margin-bottom: 0.625rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  padding: 0.5rem;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
   transition: all 0.2s;
   
   &:last-child {
@@ -508,23 +599,23 @@ const CompactCartItem = styled.div`
 `;
 
 const ItemImageCompact = styled.img`
-  width: 56px;
-  height: 56px;
+  width: 48px;
+  height: 48px;
   object-fit: cover;
-  border-radius: 10px;
+  border-radius: 8px;
   flex-shrink: 0;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 `;
 
 const ItemDetailsCompact = styled.div`
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
+  gap: 0.25rem;
 `;
 
 const ItemNameCompact = styled.div`
-  font-size: 0.9375rem;
+  font-size: 0.8125rem;
   font-weight: 700;
   color: #212529;
   line-height: 1.3;
@@ -532,7 +623,7 @@ const ItemNameCompact = styled.div`
 `;
 
 const ItemPriceCompact = styled.div`
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   color: #6c757d;
   font-weight: 500;
   font-family: 'Space Grotesk', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
@@ -542,14 +633,14 @@ const ItemPriceCompact = styled.div`
 const QuantityControlsCompact = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.625rem;
-  margin-top: 0.375rem;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
 `;
 
 const QuantityButtonCompact = styled.button`
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   display: flex;
@@ -563,13 +654,18 @@ const QuantityButtonCompact = styled.button`
     transform: scale(0.9);
     box-shadow: 0 1px 3px rgba(102, 126, 234, 0.4);
   }
+  
+  svg {
+    width: 10px;
+    height: 10px;
+  }
 `;
 
 const QuantityValueCompact = styled.span`
-  font-size: 0.9375rem;
+  font-size: 0.8125rem;
   font-weight: 700;
   color: #212529;
-  min-width: 24px;
+  min-width: 20px;
   text-align: center;
 `;
 
@@ -578,11 +674,11 @@ const ItemActionsCompact = styled.div`
   flex-direction: column;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 0.375rem;
+  gap: 0.25rem;
 `;
 
 const ItemTotalCompact = styled.div`
-  font-size: 0.9375rem;
+  font-size: 0.8125rem;
   font-weight: 700;
   font-family: 'Space Grotesk', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -596,8 +692,8 @@ const RemoveButtonCompact = styled.button`
   background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%);
   border: none;
   color: #ef4444;
-  padding: 0.375rem;
-  border-radius: 6px;
+  padding: 0.3rem;
+  border-radius: 5px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -608,11 +704,16 @@ const RemoveButtonCompact = styled.button`
     background: linear-gradient(135deg, #ffe0e0 0%, #ffd8d8 100%);
     transform: scale(0.9);
   }
+  
+  svg {
+    width: 12px;
+    height: 12px;
+  }
 `;
 
 const Footer = styled.div`
   background: white;
-  padding: 1.5rem 1.5rem calc(1.5rem + env(safe-area-inset-bottom));
+  padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom));
   border-top: 1px solid rgba(0, 0, 0, 0.06);
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
   position: relative;
@@ -629,17 +730,17 @@ const Footer = styled.div`
 `;
 
 const Summary = styled.div`
-  margin-bottom: 1.25rem;
-  padding: 1rem;
+  margin-bottom: 0.875rem;
+  padding: 0.75rem;
   background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-  border-radius: 12px;
+  border-radius: 10px;
   border: 1px solid rgba(102, 126, 234, 0.1);
 `;
 
 const SummaryRow = styled.div`
   display: flex;
   justify-content: space-between;
-  margin-bottom: 0.625rem;
+  margin-bottom: 0.5rem;
   align-items: center;
   
   &:last-of-type {
@@ -648,13 +749,13 @@ const SummaryRow = styled.div`
 `;
 
 const SummaryLabel = styled.span`
-  font-size: 0.9375rem;
+  font-size: 0.8125rem;
   color: #6c757d;
   font-weight: 500;
 `;
 
 const SummaryValue = styled.span`
-  font-size: 0.9375rem;
+  font-size: 0.8125rem;
   color: #212529;
   font-weight: 600;
   font-family: 'Space Grotesk', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
@@ -664,25 +765,25 @@ const SummaryValue = styled.span`
 const Divider = styled.div`
   height: 1px;
   background: linear-gradient(90deg, transparent 0%, rgba(102, 126, 234, 0.2) 50%, transparent 100%);
-  margin: 0.875rem 0;
+  margin: 0.625rem 0;
 `;
 
 const TotalRow = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 0.5rem;
+  padding-top: 0.375rem;
 `;
 
 const TotalLabel = styled.span`
-  font-size: 1.125rem;
+  font-size: 1rem;
   font-weight: 800;
   color: #212529;
   letter-spacing: -0.3px;
 `;
 
 const TotalValue = styled.span`
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 700;
   font-family: 'Space Grotesk', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -695,15 +796,15 @@ const TotalValue = styled.span`
 const ClosedWarning = styled.div`
   background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
   border: 1px solid #ffc107;
-  border-radius: 12px;
-  padding: 1rem;
-  margin-bottom: 1.25rem;
+  border-radius: 10px;
+  padding: 0.75rem;
+  margin-bottom: 0.875rem;
   box-shadow: 0 2px 8px rgba(255, 193, 7, 0.2);
 `;
 
 const ClosedWarningText = styled.p`
   color: #856404;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   text-align: center;
   margin: 0;
   font-weight: 600;
@@ -713,7 +814,7 @@ const ClosedWarningText = styled.p`
 const CheckoutButtons = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.875rem;
+  gap: 0.625rem;
 `;
 
 const ExpressCheckoutButton = styled.button`
@@ -722,18 +823,18 @@ const ExpressCheckoutButton = styled.button`
     ? 'linear-gradient(135deg, #ccc 0%, #bbb 100%)' 
     : 'linear-gradient(135deg, #FF6B35 0%, #f7931e 100%)'};
   color: white;
-  padding: 1.125rem 1.5rem;
-  border-radius: 14px;
-  font-size: 1.0625rem;
+  padding: 0.875rem 1.25rem;
+  border-radius: 12px;
+  font-size: 0.9375rem;
   font-weight: 800;
   box-shadow: ${props => props.disabled 
     ? 'none' 
-    : '0 6px 20px rgba(255, 107, 53, 0.35)'};
+    : '0 4px 16px rgba(255, 107, 53, 0.35)'};
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.625rem;
+  gap: 0.5rem;
   border: none;
   letter-spacing: -0.3px;
   position: relative;
@@ -763,6 +864,11 @@ const ExpressCheckoutButton = styled.button`
     cursor: not-allowed;
     opacity: 0.6;
   }
+  
+  svg {
+    width: 16px;
+    height: 16px;
+  }
 `;
 
 const LoginCheckoutButton = styled.button`
@@ -771,18 +877,18 @@ const LoginCheckoutButton = styled.button`
     ? 'linear-gradient(135deg, #ccc 0%, #bbb 100%)' 
     : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'};
   color: white;
-  padding: 1.125rem 1.5rem;
-  border-radius: 14px;
-  font-size: 1.0625rem;
+  padding: 0.875rem 1.25rem;
+  border-radius: 12px;
+  font-size: 0.9375rem;
   font-weight: 800;
   box-shadow: ${props => props.disabled 
     ? 'none' 
-    : '0 6px 20px rgba(102, 126, 234, 0.35)'};
+    : '0 4px 16px rgba(102, 126, 234, 0.35)'};
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.625rem;
+  gap: 0.5rem;
   border: none;
   letter-spacing: -0.3px;
   position: relative;
@@ -811,6 +917,11 @@ const LoginCheckoutButton = styled.button`
   &:disabled {
     cursor: not-allowed;
     opacity: 0.6;
+  }
+  
+  svg {
+    width: 16px;
+    height: 16px;
   }
 `;
 

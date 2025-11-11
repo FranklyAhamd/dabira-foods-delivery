@@ -27,17 +27,26 @@ enum UserRole {
   MANAGER
 }
 
+model Category {
+  id          String     @id @default(uuid())
+  name        String     @unique
+  isTakeaway  Boolean    @default(false)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
 model MenuItem {
-  id          String      @id @default(uuid())
-  name        String
-  description String
-  price       Float
-  category    String
-  image       String?
-  available   Boolean     @default(true)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  orderItems  OrderItem[]
+  id                      String      @id @default(uuid())
+  name                    String
+  description             String
+  price                   Float
+  category                String
+  image                   String?
+  available               Boolean     @default(true)
+  maxPortionsPerTakeaway  Int?
+  createdAt               DateTime    @default(now())
+  updatedAt               DateTime    @updatedAt
+  orderItems              OrderItem[]
 }
 
 model Order {
