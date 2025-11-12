@@ -13,6 +13,7 @@ import MenuItemDetails from '../pages/MenuItemDetails/MenuItemDetails';
 import Cart from '../pages/Cart/Cart';
 import Checkout from '../pages/Checkout/Checkout';
 import OrderConfirmation from '../pages/OrderConfirmation/OrderConfirmation';
+import PaymentCallback from '../pages/PaymentCallback/PaymentCallback';
 import MyOrders from '../pages/MyOrders/MyOrders';
 import OrderDetails from '../pages/OrderDetails/OrderDetails';
 import Profile from '../pages/Profile/Profile';
@@ -74,6 +75,9 @@ const AppRoutes = () => {
         
         {/* Order Confirmation - accessible to both guests and authenticated users */}
         <Route path="order-confirmation" element={<OrderConfirmation />} />
+        
+        {/* Payment Callback - accessible to both guests and authenticated users */}
+        <Route path="payment/callback" element={<PaymentCallback />} />
         
         {/* Protected Routes */}
         <Route path="my-orders" element={

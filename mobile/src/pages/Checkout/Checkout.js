@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import io from 'socket.io-client';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import api, { API_URL } from '../../config/api';
 
 const Checkout = () => {
@@ -11,6 +12,7 @@ const Checkout = () => {
   const location = useLocation();
   const { cartItems, getTotalPrice, clearCart } = useCart();
   const { user, isAuthenticated } = useAuth();
+  const { success } = useToast();
   const isGuest = location.state?.isGuest ?? !isAuthenticated;
   
   const [deliveryAddress, setDeliveryAddress] = useState('');
@@ -104,56 +106,50 @@ const Checkout = () => {
         return;
       }
       
-      const orderPayload = {
+      // Calculate total amount
+      const subtotal = getTotalPrice();
+      const deliveryFee = 5.00;
+      const total = subtotal + deliveryFee;
+      
+      // Initialize payment with Monnify
+      const paymentPayload = {
+        amount: total,
+        customerName: customerName.trim(),
+        customerEmail: user?.email || `${customerPhone}@temp.com`, // Use phone as email if no email
+        customerPhone: customerPhone.trim(),
         items: orderItems,
         deliveryAddress: deliveryAddress.trim(),
-        customerName: customerName.trim(),
-        customerPhone: customerPhone.trim(),
         notes: notes ? notes.trim() : null
       };
       
-      console.log('Placing order with payload:', orderPayload);
+      console.log('Initializing payment with payload:', paymentPayload);
       
-      const response = await api.post('/orders', orderPayload);
+      const response = await api.post('/payment/initialize', paymentPayload);
       
-      console.log('Order response:', response);
+      console.log('Payment initialization response:', response);
       
-      // API interceptor returns response.data, so response is already unwrapped
-      // Backend returns: { success: true, message: '...', data: { order } }
-      // After interceptor: response = { success: true, message: '...', data: { order } }
-      // Note: API interceptor validateStatus allows 400, so we need to check success flag
-      
-      // Check if response indicates an error (400 validation errors)
+      // Check if response indicates an error
       if (response && response.success === false) {
-        // This is a validation or other error response
         if (response.errors && Array.isArray(response.errors)) {
           const validationErrors = response.errors.map(e => e.msg || e.message || e).join(', ');
           setError(`Validation error: ${validationErrors}`);
         } else {
-          setError(response.message || 'Invalid order data. Please check your cart and try again.');
+          setError(response.message || 'Failed to initialize payment. Please try again.');
         }
         setLoading(false);
         return;
       }
       
-      // Check if response is successful and has the expected structure
-      if (response && response.success && response.data && response.data.order) {
-        clearCart();
-        navigate('/order-confirmation', { 
-          state: { order: response.data.order }
-        });
+      // Check if response is successful and has checkout URL
+      if (response && response.success && response.data && response.data.checkoutUrl) {
+        // Redirect to Monnify checkout page
+        window.location.href = response.data.checkoutUrl;
       } else {
-        // Handle unexpected response structure
-        console.error('Unexpected response structure:', response);
-        setError(response?.message || 'Order was placed but confirmation failed. Please check your orders.');
-        // Don't clear cart if we're not sure the order was created
-        if (response?.success) {
-          clearCart();
-          navigate('/orders');
-        }
+        setError(response?.message || 'Failed to initialize payment. Please try again.');
+        setLoading(false);
       }
     } catch (err) {
-      console.error('Error placing order:', err);
+      console.error('Error initializing payment:', err);
       console.error('Error details:', {
         status: err.response?.status,
         data: err.response?.data,
@@ -169,15 +165,12 @@ const Checkout = () => {
         } else if (err.response?.data?.message) {
           setError(err.response.data.message);
         } else {
-          setError('Invalid order data. Please check your cart and try again.');
+          setError('Invalid payment data. Please check your information and try again.');
         }
-      } else if (err.response?.status === 404) {
-        setError('One or more items in your cart are no longer available. Please update your cart.');
       } else {
-        const errorMessage = err.response?.data?.message || err.message || 'Failed to place order. Please try again.';
+        const errorMessage = err.response?.data?.message || err.message || 'Failed to initialize payment. Please try again.';
         setError(errorMessage);
       }
-    } finally {
       setLoading(false);
     }
   };
@@ -302,7 +295,7 @@ const Checkout = () => {
         </Section>
         
         <SubmitButton type="submit" disabled={loading || !isDeliveryOpen}>
-          {!isDeliveryOpen ? 'Delivery Closed' : loading ? 'Placing Order...' : 'Place Order'}
+          {!isDeliveryOpen ? 'Delivery Closed' : loading ? 'Processing Payment...' : 'Pay Now'}
         </SubmitButton>
       </Form>
     </Container>

@@ -30,7 +30,7 @@ const getSettings = async (req, res) => {
 
     // Hide sensitive keys from non-admin users
     if (req.user?.role !== 'ADMIN' && req.user?.role !== 'MANAGER') {
-      delete settings.paystackSecretKey;
+      delete settings.monnifySecretKey;
     }
 
     res.json({
@@ -71,8 +71,9 @@ const updateSettings = async (req, res) => {
       restaurantAddress,
       restaurantPhone,
       restaurantEmail,
-      paystackPublicKey,
-      paystackSecretKey,
+      monnifyApiKey,
+      monnifySecretKey,
+      monnifyContractCode,
       deliveryFee,
       minimumOrder,
       openingTime,
@@ -99,8 +100,9 @@ const updateSettings = async (req, res) => {
           restaurantAddress: restaurantAddress || null,
           restaurantPhone: restaurantPhone || null,
           restaurantEmail: restaurantEmail || null,
-          paystackPublicKey: paystackPublicKey || null,
-          paystackSecretKey: paystackSecretKey || null,
+          monnifyApiKey: monnifyApiKey || null,
+          monnifySecretKey: monnifySecretKey || null,
+          monnifyContractCode: monnifyContractCode || null,
           deliveryFee: safeParseFloat(deliveryFee, 0),
           minimumOrder: safeParseFloat(minimumOrder, 0),
           openingTime: openingTime || null,
@@ -115,8 +117,9 @@ const updateSettings = async (req, res) => {
       if (restaurantAddress !== undefined) updateData.restaurantAddress = restaurantAddress || null;
       if (restaurantPhone !== undefined) updateData.restaurantPhone = restaurantPhone || null;
       if (restaurantEmail !== undefined) updateData.restaurantEmail = restaurantEmail || null;
-      if (paystackPublicKey !== undefined) updateData.paystackPublicKey = paystackPublicKey || null;
-      if (paystackSecretKey !== undefined) updateData.paystackSecretKey = paystackSecretKey || null;
+      if (monnifyApiKey !== undefined) updateData.monnifyApiKey = monnifyApiKey || null;
+      if (monnifySecretKey !== undefined) updateData.monnifySecretKey = monnifySecretKey || null;
+      if (monnifyContractCode !== undefined) updateData.monnifyContractCode = monnifyContractCode || null;
       if (deliveryFee !== undefined) updateData.deliveryFee = safeParseFloat(deliveryFee, settings.deliveryFee);
       if (minimumOrder !== undefined) updateData.minimumOrder = safeParseFloat(minimumOrder, settings.minimumOrder);
       if (openingTime !== undefined) updateData.openingTime = openingTime || null;

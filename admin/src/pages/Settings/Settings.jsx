@@ -30,8 +30,9 @@ const Settings = () => {
     restaurantAddress: '',
     restaurantPhone: '',
     restaurantEmail: '',
-    paystackPublicKey: '',
-    paystackSecretKey: '',
+    monnifyApiKey: '',
+    monnifySecretKey: '',
+    monnifyContractCode: '',
     deliveryFee: '',
     minimumOrder: '',
     openingTime: '',
@@ -50,8 +51,9 @@ const Settings = () => {
           restaurantAddress: settings.restaurantAddress || '',
           restaurantPhone: settings.restaurantPhone || '',
           restaurantEmail: settings.restaurantEmail || '',
-          paystackPublicKey: settings.paystackPublicKey || '',
-          paystackSecretKey: settings.paystackSecretKey || '',
+          monnifyApiKey: settings.monnifyApiKey || '',
+          monnifySecretKey: settings.monnifySecretKey || '',
+          monnifyContractCode: settings.monnifyContractCode || '',
           deliveryFee: settings.deliveryFee || '',
           minimumOrder: settings.minimumOrder || '',
           openingTime: settings.openingTime || '',
@@ -168,25 +170,35 @@ const Settings = () => {
         </Section>
 
         <Section>
-          <SectionTitle>Paystack Configuration</SectionTitle>
+          <SectionTitle>Monnify Configuration</SectionTitle>
           <FormGrid>
             <FormGroup>
-              <Label>Paystack Public Key</Label>
+              <Label>Monnify API Key</Label>
               <Input
                 type="text"
-                value={formData.paystackPublicKey}
-                onChange={(e) => setFormData({ ...formData, paystackPublicKey: e.target.value })}
-                placeholder="pk_test_..."
+                value={formData.monnifyApiKey}
+                onChange={(e) => setFormData({ ...formData, monnifyApiKey: e.target.value })}
+                placeholder="MK_TEST_..."
               />
             </FormGroup>
 
             <FormGroup>
-              <Label>Paystack Secret Key</Label>
+              <Label>Monnify Secret Key</Label>
               <Input
                 type="password"
-                value={formData.paystackSecretKey}
-                onChange={(e) => setFormData({ ...formData, paystackSecretKey: e.target.value })}
-                placeholder="sk_test_..."
+                value={formData.monnifySecretKey}
+                onChange={(e) => setFormData({ ...formData, monnifySecretKey: e.target.value })}
+                placeholder="Your Monnify secret key"
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <Label>Monnify Contract Code</Label>
+              <Input
+                type="text"
+                value={formData.monnifyContractCode}
+                onChange={(e) => setFormData({ ...formData, monnifyContractCode: e.target.value })}
+                placeholder="Your Monnify contract code"
               />
             </FormGroup>
           </FormGrid>
