@@ -129,6 +129,7 @@ model DeliveryLocation {
 model DeliveryArea {
   id                String           @id @default(uuid())
   name              String
+  price             Float             @default(0)
   deliveryLocationId String
   deliveryLocation  DeliveryLocation @relation(fields: [deliveryLocationId], references: [id], onDelete: Cascade)
   isActive          Boolean          @default(true)

@@ -190,7 +190,10 @@ const Checkout = () => {
       
       // Calculate total amount
       const subtotal = getTotalPrice();
-      const deliveryFee = selectedLocation ? parseFloat(selectedLocation.price) : 0;
+      // Use area price if area is selected, otherwise use location price
+      const deliveryFee = selectedArea 
+        ? parseFloat(selectedArea.price) 
+        : (selectedLocation ? parseFloat(selectedLocation.price) : 0);
       const total = subtotal + deliveryFee;
       
       // Initialize payment with Monnify
@@ -276,7 +279,10 @@ const Checkout = () => {
   };
 
   const subtotal = getTotalPrice();
-  const deliveryFee = selectedLocation ? parseFloat(selectedLocation.price) : 0;
+  // Use area price if area is selected, otherwise use location price
+  const deliveryFee = selectedArea 
+    ? parseFloat(selectedArea.price) 
+    : (selectedLocation ? parseFloat(selectedLocation.price) : 0);
   const total = subtotal + deliveryFee;
 
   // Redirect if cart is empty
@@ -371,7 +377,7 @@ const Checkout = () => {
                   <option value="">Select an area</option>
                   {deliveryAreas.map((area) => (
                     <option key={area.id} value={area.id}>
-                      {area.name}
+                      {area.name} - ₦{parseFloat(area.price).toFixed(2)}
                     </option>
                   ))}
                 </Select>

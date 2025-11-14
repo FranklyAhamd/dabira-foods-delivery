@@ -49,7 +49,7 @@ const DeliveryLocations = () => {
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [areas, setAreas] = useState([]);
   const [loadingAreas, setLoadingAreas] = useState(false);
-  const [areaFormData, setAreaFormData] = useState({ name: '', isActive: true });
+  const [areaFormData, setAreaFormData] = useState({ name: '', price: '', isActive: true });
   const [editingArea, setEditingArea] = useState(null);
   const [deleteAreaConfirm, setDeleteAreaConfirm] = useState({ isOpen: false, area: null });
   const [formData, setFormData] = useState({
@@ -187,7 +187,7 @@ const DeliveryLocations = () => {
     setShowAreaModal(false);
     setSelectedLocation(null);
     setAreas([]);
-    setAreaFormData({ name: '', isActive: true });
+    setAreaFormData({ name: '', price: '', isActive: true });
     setEditingArea(null);
   };
 
@@ -214,10 +214,16 @@ const DeliveryLocations = () => {
       return false;
     }
 
+    if (!areaFormData.price || parseFloat(areaFormData.price) < 0) {
+      error('Valid delivery price is required');
+      return false;
+    }
+
     try {
       if (editingArea) {
         const response = await api.put(`/delivery-areas/${editingArea.id}`, {
           name: areaFormData.name.trim(),
+          price: parseFloat(areaFormData.price),
           isActive: areaFormData.isActive
         });
         if (response.success) {
@@ -228,12 +234,13 @@ const DeliveryLocations = () => {
           if (locationsResponse.success) {
             setLocations(locationsResponse.data.locations);
           }
-          setAreaFormData({ name: '', isActive: true });
+          setAreaFormData({ name: '', price: '', isActive: true });
           setEditingArea(null);
         }
       } else {
         const response = await api.post('/delivery-areas', {
           name: areaFormData.name.trim(),
+          price: parseFloat(areaFormData.price),
           deliveryLocationId: selectedLocation.id,
           isActive: areaFormData.isActive
         });
@@ -245,7 +252,7 @@ const DeliveryLocations = () => {
           if (locationsResponse.success) {
             setLocations(locationsResponse.data.locations);
           }
-          setAreaFormData({ name: '', isActive: true });
+          setAreaFormData({ name: '', price: '', isActive: true });
         }
       }
       return false;
@@ -259,6 +266,7 @@ const DeliveryLocations = () => {
     setEditingArea(area);
     setAreaFormData({
       name: area.name,
+      price: area.price.toString(),
       isActive: area.isActive
     });
   };
@@ -494,6 +502,19 @@ const DeliveryLocations = () => {
               </FormGroup>
 
               <FormGroup>
+                <Label>Delivery Fee (₦) *</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={areaFormData.price}
+                  onChange={(e) => setAreaFormData({ ...areaFormData, price: e.target.value })}
+                  placeholder="0.00"
+                  required
+                />
+              </FormGroup>
+
+              <FormGroup>
                 <Label>
                   <input
                     type="checkbox"
@@ -552,30 +573,34 @@ const DeliveryLocations = () => {
                         gap: '6px'
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         <span style={{ 
                           fontSize: '11px', 
                           fontWeight: 500, 
                           color: '#374151',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          flex: 1
+                          whiteSpace: 'nowrap'
                         }}>
                           {area.name}
                         </span>
-                        <StatusBadge
-                          $active={area.isActive}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            toggleAreaActive(area);
-                          }}
-                          title={`Click to ${area.isActive ? 'deactivate' : 'activate'}`}
-                          style={{ fontSize: '8px', padding: '2px 6px', flexShrink: 0 }}
-                        >
-                          {area.isActive ? 'Active' : 'Inactive'}
-                        </StatusBadge>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px' }}>
+                          <span style={{ fontSize: '10px', color: '#667eea', fontWeight: 600 }}>
+                            ₦{parseFloat(area.price).toFixed(2)}
+                          </span>
+                          <StatusBadge
+                            $active={area.isActive}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              toggleAreaActive(area);
+                            }}
+                            title={`Click to ${area.isActive ? 'deactivate' : 'activate'}`}
+                            style={{ fontSize: '8px', padding: '2px 6px', flexShrink: 0 }}
+                          >
+                            {area.isActive ? 'Active' : 'Inactive'}
+                          </StatusBadge>
+                        </div>
                       </div>
                       <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end' }}>
                         <ActionButton

@@ -15,11 +15,13 @@ const router = express.Router();
 // Validation rules
 const createAreaValidation = [
   body('name').trim().notEmpty().withMessage('Area name is required'),
+  body('price').isFloat({ min: 0 }).withMessage('Price must be a valid number >= 0'),
   body('deliveryLocationId').notEmpty().withMessage('Delivery location ID is required')
 ];
 
 const updateAreaValidation = [
-  body('name').optional().trim().notEmpty().withMessage('Area name cannot be empty')
+  body('name').optional().trim().notEmpty().withMessage('Area name cannot be empty'),
+  body('price').optional().isFloat({ min: 0 }).withMessage('Price must be a valid number >= 0')
 ];
 
 // Public route - get active areas for a location

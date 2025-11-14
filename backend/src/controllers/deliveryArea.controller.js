@@ -102,7 +102,7 @@ exports.createArea = async (req, res) => {
       });
     }
 
-    const { name, deliveryLocationId, isActive } = req.body;
+    const { name, price, deliveryLocationId, isActive } = req.body;
 
     // Verify location exists
     const location = await prisma.deliveryLocation.findUnique({
@@ -116,9 +116,17 @@ exports.createArea = async (req, res) => {
       });
     }
 
+    if (!price || parseFloat(price) < 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid delivery price is required'
+      });
+    }
+
     const area = await prisma.deliveryArea.create({
       data: {
         name: name.trim(),
+        price: parseFloat(price),
         deliveryLocationId,
         isActive: isActive !== undefined ? isActive : true
       }
@@ -151,7 +159,7 @@ exports.updateArea = async (req, res) => {
     }
 
     const { id } = req.params;
-    const { name, isActive } = req.body;
+    const { name, price, isActive } = req.body;
 
     const area = await prisma.deliveryArea.findUnique({
       where: { id }
@@ -164,10 +172,18 @@ exports.updateArea = async (req, res) => {
       });
     }
 
+    if (price !== undefined && (isNaN(parseFloat(price)) || parseFloat(price) < 0)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid delivery price is required'
+      });
+    }
+
     const updatedArea = await prisma.deliveryArea.update({
       where: { id },
       data: {
         ...(name !== undefined && { name: name.trim() }),
+        ...(price !== undefined && { price: parseFloat(price) }),
         ...(isActive !== undefined && { isActive })
       }
     });
