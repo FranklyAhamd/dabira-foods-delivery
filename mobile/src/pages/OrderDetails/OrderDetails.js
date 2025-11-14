@@ -167,6 +167,8 @@ const OrderDetails = () => {
 const Container = styled.div`
   padding: 1rem;
   padding-bottom: 2rem;
+  background: #0a0a0a;
+  min-height: 100vh;
 `;
 
 const StatusSection = styled.div`
@@ -191,17 +193,18 @@ const StatusMessage = styled.p`
 `;
 
 const Section = styled.div`
-  background-color: white;
+  background-color: #1a1a1a;
   border-radius: 12px;
   padding: 1.5rem;
   margin-bottom: 1rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  border: 1px solid #2a2a2a;
 `;
 
 const SectionTitle = styled.h3`
   font-size: 1.125rem;
   font-weight: 600;
-  color: #333;
+  color: #ffffff;
   margin-bottom: 1rem;
 `;
 
@@ -219,14 +222,14 @@ const InfoRow = styled.div`
 const InfoLabel = styled.span`
   font-size: 0.875rem;
   font-weight: 500;
-  color: #666;
+  color: #b3b3b3;
   flex-shrink: 0;
   width: 40%;
 `;
 
 const InfoValue = styled.span`
   font-size: 0.875rem;
-  color: #333;
+  color: #ffffff;
   text-align: right;
   word-break: break-word;
 `;
@@ -264,20 +267,20 @@ const ItemQuantity = styled.span`
 
 const ItemName = styled.span`
   font-size: 0.875rem;
-  color: #333;
+  color: #ffffff;
 `;
 
 const ItemPrice = styled.span`
   font-size: 0.875rem;
   font-weight: 600;
   font-family: 'Space Grotesk', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-  color: #333;
+  color: #ffffff;
   letter-spacing: 0.01em;
 `;
 
 const Divider = styled.div`
   height: 1px;
-  background-color: #eee;
+  background-color: #2a2a2a;
   margin: 1rem 0;
 `;
 
@@ -290,7 +293,7 @@ const TotalRow = styled.div`
 const TotalLabel = styled.span`
   font-size: 1.125rem;
   font-weight: 700;
-  color: #333;
+  color: #ffffff;
 `;
 
 const TotalValue = styled.span`
@@ -333,7 +336,7 @@ const ErrorContainer = styled.div`
 `;
 
 const ErrorText = styled.p`
-  color: #c33;
+  color: #ef4444;
   font-size: 1rem;
   text-align: center;
 `;

@@ -166,7 +166,7 @@ const MenuItemDetails = () => {
 };
 
 const Container = styled.div`
-  background: white;
+  background: #0a0a0a;
   min-height: 100vh;
 `;
 
@@ -187,22 +187,23 @@ const Header = styled.div`
 const ItemName = styled.h1`
   font-size: 1.75rem;
   font-weight: 700;
-  color: #333;
+  color: #ffffff;
   margin-bottom: 0.5rem;
 `;
 
 const Category = styled.span`
   display: inline-block;
   padding: 0.25rem 0.75rem;
-  background-color: #f0f0f0;
+  background-color: #1a1a1a;
   border-radius: 20px;
   font-size: 0.875rem;
-  color: #666;
+  color: #b3b3b3;
+  border: 1px solid #2a2a2a;
 `;
 
 const Description = styled.p`
   font-size: 1rem;
-  color: #666;
+  color: #b3b3b3;
   line-height: 1.6;
   margin-bottom: 1.5rem;
 `;
@@ -223,7 +224,7 @@ const QuantitySection = styled.div`
 const QuantityLabel = styled.div`
   font-size: 1rem;
   font-weight: 600;
-  color: #333;
+  color: #ffffff;
   margin-bottom: 0.75rem;
 `;
 
@@ -237,8 +238,8 @@ const QuantityButton = styled.button`
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background-color: #f0f0f0;
-  color: #333;
+  background-color: #2a2a2a;
+  color: #ffffff;
   font-size: 1.5rem;
   display: flex;
   align-items: center;
@@ -246,7 +247,7 @@ const QuantityButton = styled.button`
   transition: background-color 0.2s;
   
   &:active:not(:disabled) {
-    background-color: #e0e0e0;
+    background-color: #333333;
   }
   
   &:disabled {
@@ -258,7 +259,7 @@ const QuantityButton = styled.button`
 const QuantityValue = styled.span`
   font-size: 1.25rem;
   font-weight: 600;
-  color: #333;
+  color: #ffffff;
   min-width: 40px;
   text-align: center;
 `;
@@ -268,15 +269,16 @@ const TotalSection = styled.div`
   justify-content: space-between;
   align-items: center;
   padding: 1rem;
-  background-color: #f8f8f8;
+  background-color: #1a1a1a;
   border-radius: 8px;
   margin-bottom: 1.5rem;
+  border: 1px solid #2a2a2a;
 `;
 
 const TotalLabel = styled.span`
   font-size: 1.125rem;
   font-weight: 600;
-  color: #333;
+  color: #ffffff;
 `;
 
 const TotalValue = styled.span`
@@ -288,15 +290,15 @@ const TotalValue = styled.span`
 `;
 
 const ClosedWarning = styled.div`
-  background-color: #fff3cd;
-  border: 1px solid #ffc107;
+  background-color: rgba(245, 158, 11, 0.2);
+  border: 1px solid #f59e0b;
   border-radius: 8px;
   padding: 1rem;
   margin-bottom: 1rem;
 `;
 
 const ClosedWarningText = styled.p`
-  color: #856404;
+  color: #f59e0b;
   font-size: 0.9375rem;
   text-align: center;
   margin: 0;
@@ -355,7 +357,7 @@ const ErrorContainer = styled.div`
 `;
 
 const ErrorText = styled.p`
-  color: #c33;
+  color: #ef4444;
   font-size: 1rem;
   text-align: center;
 `;

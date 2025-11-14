@@ -344,7 +344,7 @@ const Landing = () => {
 const Container = styled.div`
   padding: 0;
   padding-bottom: 2rem;
-  background: #f8f9fa;
+  background: #0a0a0a;
   min-height: 100vh;
 `;
 
@@ -372,7 +372,7 @@ const Spinner = styled.div`
 `;
 
 const LoadingText = styled.p`
-  color: #666;
+  color: #b3b3b3;
   font-size: 1rem;
 `;
 
@@ -659,13 +659,14 @@ const QuickInfo = styled.div`
 `;
 
 const InfoCard = styled.div`
-  background: white;
+  background: #1a1a1a;
   border-radius: 12px;
   padding: 1rem;
   display: flex;
   align-items: center;
   gap: 1rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border: 1px solid #2a2a2a;
 `;
 
 const InfoIcon = styled.div`
@@ -686,7 +687,7 @@ const InfoContent = styled.div`
 
 const InfoLabel = styled.div`
   font-size: 0.75rem;
-  color: #999;
+  color: #808080;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 0.25rem;
@@ -695,7 +696,7 @@ const InfoLabel = styled.div`
 
 const InfoValue = styled.div`
   font-size: 0.9375rem;
-  color: #333;
+  color: #ffffff;
   font-weight: 600;
 `;
 
@@ -714,7 +715,7 @@ const SectionHeader = styled.div`
 const SectionTitle = styled.h2`
   font-size: 1.5rem;
   font-weight: 800;
-  color: #1a1a1a;
+  color: #ffffff;
 `;
 
 const ViewAllButton = styled.button`
@@ -740,13 +741,14 @@ const FeaturedGrid = styled.div`
 `;
 
 const FeaturedCard = styled.div`
-  background: white;
+  background: #1a1a1a;
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
   cursor: ${props => props.$disabled ? 'not-allowed' : 'pointer'};
   transition: all 0.3s ease;
   opacity: ${props => props.$disabled ? 0.6 : 1};
+  border: 1px solid #2a2a2a;
   
   &:active:not([disabled]) {
     transform: scale(0.98);
@@ -767,14 +769,14 @@ const FeaturedInfo = styled.div`
 const FeaturedName = styled.h3`
   font-size: 0.9375rem;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #ffffff;
   margin-bottom: 0.25rem;
   line-height: 1.3;
 `;
 
 const FeaturedCategory = styled.span`
   font-size: 0.75rem;
-  color: #999;
+  color: #808080;
   display: block;
   margin-bottom: 0.5rem;
 `;
@@ -810,7 +812,7 @@ const AddButton = styled.button`
   }
   
   &:disabled {
-    background: #ccc;
+    background: #2a2a2a;
     box-shadow: none;
     cursor: not-allowed;
     opacity: 0.6;
@@ -819,8 +821,10 @@ const AddButton = styled.button`
 
 const WhyChooseUs = styled.div`
   padding: 1.5rem;
-  background: white;
+  background: #1a1a1a;
   margin-top: 1rem;
+  border-radius: 12px;
+  border: 1px solid #2a2a2a;
 `;
 
 const BenefitsGrid = styled.div`
@@ -831,10 +835,11 @@ const BenefitsGrid = styled.div`
 `;
 
 const BenefitCard = styled.div`
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  background: linear-gradient(135deg, #121212 0%, #1a1a1a 100%);
   border-radius: 12px;
   padding: 1.25rem;
   text-align: center;
+  border: 1px solid #2a2a2a;
 `;
 
 const BenefitIcon = styled.div`
@@ -845,13 +850,13 @@ const BenefitIcon = styled.div`
 const BenefitTitle = styled.h3`
   font-size: 1rem;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #ffffff;
   margin-bottom: 0.5rem;
 `;
 
 const BenefitText = styled.p`
   font-size: 0.8125rem;
-  color: #666;
+  color: #b3b3b3;
   line-height: 1.4;
   margin: 0;
 `;

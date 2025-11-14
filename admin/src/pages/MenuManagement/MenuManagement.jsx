@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { FiEdit, FiTrash2, FiPlus, FiSettings } from 'react-icons/fi';
+import React, { useState, useEffect, useMemo } from 'react';
+import { FiEdit, FiTrash2, FiPlus, FiSettings, FiSearch } from 'react-icons/fi';
 import api from '../../config/api';
 import { useToast } from '../../context/ToastContext';
 import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
@@ -29,7 +29,11 @@ import {
   LoadingSpinner,
   AvailableBadge,
   FloatingAddButton,
-  CategoryManageButton
+  CategoryManageButton,
+  SearchBar,
+  SearchInput,
+  FilterContainer,
+  FilterSelect
 } from './MenuManagementStyles';
 
 const MenuManagement = () => {
@@ -41,6 +45,8 @@ const MenuManagement = () => {
   const [editingItem, setEditingItem] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, item: null });
   const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     price: '',
@@ -192,6 +198,25 @@ const MenuManagement = () => {
     }
   };
 
+  // Filter menu items based on search and category
+  const filteredMenuItems = useMemo(() => {
+    return menuItems.filter(item => {
+      const matchesSearch = searchQuery === '' || 
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.category.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesCategory = selectedCategory === '' || item.category === selectedCategory;
+      
+      return matchesSearch && matchesCategory;
+    });
+  }, [menuItems, searchQuery, selectedCategory]);
+
+  // Get unique categories for filter
+  const uniqueCategories = useMemo(() => {
+    const cats = [...new Set(menuItems.map(item => item.category))].sort();
+    return cats;
+  }, [menuItems]);
+
   if (loading) {
     return (
       <Container>
@@ -204,7 +229,28 @@ const MenuManagement = () => {
 
   return (
     <Container>
-      {menuItems.length > 0 ? (
+      <FilterContainer>
+        <SearchBar>
+          <FiSearch size={16} />
+          <SearchInput
+            type="text"
+            placeholder="Search by name or category..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </SearchBar>
+        <FilterSelect
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
+        >
+          <option value="">All Categories</option>
+          {uniqueCategories.map(category => (
+            <option key={category} value={category}>{category}</option>
+          ))}
+        </FilterSelect>
+      </FilterContainer>
+
+      {filteredMenuItems.length > 0 ? (
         <Table>
           <thead>
             <TableRow>
@@ -216,7 +262,7 @@ const MenuManagement = () => {
             </TableRow>
           </thead>
           <tbody>
-            {menuItems.map((item) => (
+            {filteredMenuItems.map((item) => (
               <TableRow key={item.id}>
                 <TableCell>{item.name}</TableCell>
                 <TableCell>{item.category}</TableCell>
@@ -242,8 +288,10 @@ const MenuManagement = () => {
             ))}
           </tbody>
         </Table>
-      ) : (
+      ) : menuItems.length === 0 ? (
         <EmptyMessage>No menu items yet. Add your first item!</EmptyMessage>
+      ) : (
+        <EmptyMessage>No menu items found matching your search criteria.</EmptyMessage>
       )}
 
       {showModal && (

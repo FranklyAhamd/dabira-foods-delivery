@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
+import api from '../../config/api';
 import { 
   FiHome, 
   FiShoppingCart, 
@@ -18,6 +19,24 @@ const MainLayout = () => {
   const { getTotalPlates } = useCart();
   const { isAuthenticated } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // Wake up the server when MainLayout mounts
+  // This ensures the server is awake regardless of which page the user lands on
+  useEffect(() => {
+    const wakeUpServer = async () => {
+      try {
+        // Make a lightweight API call to wake up the Railway server
+        // Using /settings endpoint as it's lightweight and doesn't require auth
+        await api.get('/settings');
+      } catch (error) {
+        // Silently fail - this is just a wake-up call
+        // The actual pages will handle their own API calls and errors
+        console.log('Server wake-up call completed');
+      }
+    };
+
+    wakeUpServer();
+  }, []);
 
   const isActive = (path) => {
     return location.pathname === path || location.pathname.startsWith(path + '/');
@@ -139,7 +158,7 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background-color: #f8f8f8;
+  background-color: #0a0a0a;
 `;
 
 const Header = styled.header`
@@ -150,10 +169,11 @@ const Header = styled.header`
   justify-content: space-between;
   align-items: center;
   padding: 1.25rem 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
   color: white;
-  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(10px);
+  border-bottom: 1px solid #2a2a2a;
 `;
 
 const Logo = styled.h1`
@@ -240,9 +260,10 @@ const MenuContent = styled.div`
   bottom: 0;
   width: 80%;
   max-width: 300px;
-  background-color: white;
-  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
+  background-color: #1a1a1a;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.5);
   animation: slideIn 0.3s ease-out;
+  border-left: 1px solid #2a2a2a;
 
   @keyframes slideIn {
     from {
@@ -259,19 +280,19 @@ const MenuHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   padding: 1.5rem 1rem;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #2a2a2a;
 `;
 
 const MenuTitle = styled.h2`
   font-size: 1.25rem;
-  color: #333;
+  color: #ffffff;
 `;
 
 const CloseButton = styled.button`
   background: none;
   border: none;
   font-size: 1.5rem;
-  color: #666;
+  color: #b3b3b3;
   cursor: pointer;
   padding: 0;
 `;
@@ -286,12 +307,12 @@ const MenuItem = styled.li`
   a {
     display: block;
     padding: 1rem 1.5rem;
-    color: #333;
-    border-bottom: 1px solid #eee;
+    color: #ffffff;
+    border-bottom: 1px solid #2a2a2a;
     transition: background-color 0.2s;
 
     &:hover {
-      background-color: #f8f8f8;
+      background-color: #252525;
     }
   }
 `;
@@ -309,13 +330,13 @@ const BottomNav = styled.nav`
   right: 0;
   display: flex;
   justify-content: space-around;
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(15, 15, 15, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  box-shadow: 0 -4px 16px rgba(102, 126, 234, 0.1);
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.5);
   padding: 0.5rem 0 max(0.5rem, env(safe-area-inset-bottom));
   z-index: 100;
-  border-top: 1px solid rgba(255, 255, 255, 0.5);
+  border-top: 1px solid #2a2a2a;
 `;
 
 const NavItem = styled(Link)`
@@ -324,7 +345,7 @@ const NavItem = styled(Link)`
   align-items: center;
   gap: 0.125rem;
   padding: 0.375rem 0.75rem;
-  color: ${props => props.$active ? '#667eea' : '#666'};
+  color: ${props => props.$active ? '#667eea' : '#808080'};
   font-size: 0.75rem;
   font-weight: ${props => props.$active ? '600' : '500'};
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);

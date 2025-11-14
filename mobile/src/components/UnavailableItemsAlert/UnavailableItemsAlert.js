@@ -41,15 +41,16 @@ const Overlay = styled.div`
 `;
 
 const Modal = styled.div`
-  background: white;
+  background: #1a1a1a;
   border-radius: 20px;
   max-width: 500px;
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   animation: ${slideUp} 0.3s ease-out;
   position: relative;
+  border: 1px solid #2a2a2a;
 `;
 
 const Header = styled.div`
@@ -118,7 +119,7 @@ const Content = styled.div`
 
 const Message = styled.p`
   font-size: 1rem;
-  color: #333;
+  color: #ffffff;
   line-height: 1.6;
   margin-bottom: 1.5rem;
 `;
@@ -128,8 +129,8 @@ const ItemsList = styled.div`
 `;
 
 const ItemCard = styled.div`
-  background: #fff5f5;
-  border: 2px solid #ffe0e0;
+  background: rgba(239, 68, 68, 0.15);
+  border: 2px solid rgba(239, 68, 68, 0.3);
   border-radius: 12px;
   padding: 1rem;
   margin-bottom: 0.75rem;
@@ -157,13 +158,13 @@ const ItemInfo = styled.div`
 const ItemName = styled.div`
   font-size: 1rem;
   font-weight: 600;
-  color: #333;
+  color: #ffffff;
   margin-bottom: 0.25rem;
 `;
 
 const ItemDetails = styled.div`
   font-size: 0.875rem;
-  color: #666;
+  color: #b3b3b3;
 `;
 
 const Actions = styled.div`
@@ -196,7 +197,7 @@ const PrimaryButton = styled.button`
 `;
 
 const SecondaryButton = styled.button`
-  background: white;
+  background: #1a1a1a;
   color: #667eea;
   border: 2px solid #667eea;
   border-radius: 12px;
@@ -207,7 +208,7 @@ const SecondaryButton = styled.button`
   transition: all 0.2s;
   
   &:active {
-    background: #f8f9fa;
+    background: #121212;
     transform: scale(0.98);
   }
 `;

@@ -376,25 +376,27 @@ const Container = styled.div`
   margin: 0 auto;
   padding: 0.75rem;
   padding-bottom: 1.5rem;
+  background: #0a0a0a;
+  min-height: 100vh;
 `;
 
 const Title = styled.h1`
   font-size: 1.25rem;
   font-weight: 700;
-  color: #333;
+  color: #ffffff;
   margin-bottom: 0.75rem;
 `;
 
 const GuestNotice = styled.div`
-  background-color: #e3f2fd;
-  border: 1px solid #2196f3;
+  background-color: rgba(59, 130, 246, 0.2);
+  border: 1px solid #3b82f6;
   border-radius: 6px;
   padding: 0.625rem;
   margin-bottom: 0.75rem;
 `;
 
 const GuestNoticeText = styled.p`
-  color: #1565c0;
+  color: #3b82f6;
   font-size: 0.75rem;
   margin: 0;
   text-align: center;
@@ -418,15 +420,15 @@ const GuestLink = styled.button`
 `;
 
 const ClosedWarning = styled.div`
-  background-color: #fff3cd;
-  border: 1px solid #ffc107;
+  background-color: rgba(245, 158, 11, 0.2);
+  border: 1px solid #f59e0b;
   border-radius: 6px;
   padding: 0.625rem;
   margin-bottom: 0.75rem;
 `;
 
 const ClosedWarningText = styled.p`
-  color: #856404;
+  color: #f59e0b;
   font-size: 0.8125rem;
   text-align: center;
   margin: 0;
@@ -435,8 +437,8 @@ const ClosedWarningText = styled.p`
 `;
 
 const ErrorMessage = styled.div`
-  background-color: #fee;
-  color: #c33;
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
   padding: 0.625rem;
   border-radius: 6px;
   margin-bottom: 0.75rem;
@@ -451,16 +453,17 @@ const Form = styled.form`
 `;
 
 const Section = styled.div`
-  background-color: white;
+  background-color: #1a1a1a;
   border-radius: 8px;
   padding: 0.875rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  border: 1px solid #2a2a2a;
 `;
 
 const SectionTitle = styled.h2`
   font-size: 0.9375rem;
   font-weight: 600;
-  color: #333;
+  color: #ffffff;
   margin-bottom: 0.75rem;
 `;
 
@@ -476,16 +479,18 @@ const Label = styled.label`
   display: block;
   font-size: 0.8125rem;
   font-weight: 500;
-  color: #555;
+  color: #b3b3b3;
   margin-bottom: 0.375rem;
 `;
 
 const Input = styled.input`
   width: 100%;
   padding: 0.625rem;
-  border: 1px solid #ddd;
+  border: 1px solid #2a2a2a;
   border-radius: 6px;
   font-size: 0.875rem;
+  background-color: #1e1e1e;
+  color: #ffffff;
   box-sizing: border-box;
   
   &:focus {
@@ -494,18 +499,24 @@ const Input = styled.input`
   }
   
   &:disabled {
-    background-color: #f5f5f5;
+    background-color: #121212;
     cursor: not-allowed;
+  }
+  
+  &::placeholder {
+    color: #4d4d4d;
   }
 `;
 
 const TextArea = styled.textarea`
   width: 100%;
   padding: 0.625rem;
-  border: 1px solid #ddd;
+  border: 1px solid #2a2a2a;
   border-radius: 6px;
   font-size: 0.875rem;
   font-family: inherit;
+  background-color: #1e1e1e;
+  color: #ffffff;
   resize: vertical;
   box-sizing: border-box;
   line-height: 1.4;
@@ -516,18 +527,23 @@ const TextArea = styled.textarea`
   }
   
   &:disabled {
-    background-color: #f5f5f5;
+    background-color: #121212;
     cursor: not-allowed;
+  }
+  
+  &::placeholder {
+    color: #4d4d4d;
   }
 `;
 
 const Select = styled.select`
   width: 100%;
   padding: 0.625rem;
-  border: 1px solid #ddd;
+  border: 1px solid #2a2a2a;
   border-radius: 6px;
   font-size: 0.875rem;
-  background-color: white;
+  background-color: #1e1e1e;
+  color: #ffffff;
   cursor: pointer;
   box-sizing: border-box;
   
@@ -537,8 +553,13 @@ const Select = styled.select`
   }
   
   &:disabled {
-    background-color: #f5f5f5;
+    background-color: #121212;
     cursor: not-allowed;
+  }
+  
+  option {
+    background-color: #1a1a1a;
+    color: #ffffff;
   }
 `;
 
@@ -570,7 +591,7 @@ const ItemQuantity = styled.span`
 
 const ItemName = styled.span`
   font-size: 0.8125rem;
-  color: #333;
+  color: #ffffff;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -580,7 +601,7 @@ const ItemPrice = styled.span`
   font-size: 0.8125rem;
   font-weight: 600;
   font-family: 'Space Grotesk', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-  color: #333;
+  color: #ffffff;
   letter-spacing: 0.01em;
   flex-shrink: 0;
   margin-left: 0.5rem;
@@ -588,7 +609,7 @@ const ItemPrice = styled.span`
 
 const Divider = styled.div`
   height: 1px;
-  background-color: #eee;
+  background-color: #2a2a2a;
   margin: 0.5rem 0;
 `;
 
@@ -604,13 +625,13 @@ const SummaryRow = styled.div`
 
 const SummaryLabel = styled.span`
   font-size: 0.8125rem;
-  color: #666;
+  color: #b3b3b3;
 `;
 
 const SummaryValue = styled.span`
   font-size: 0.8125rem;
   font-family: 'Space Grotesk', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-  color: #333;
+  color: #ffffff;
   letter-spacing: 0.01em;
 `;
 
@@ -624,7 +645,7 @@ const TotalRow = styled.div`
 const TotalLabel = styled.span`
   font-size: 0.9375rem;
   font-weight: 700;
-  color: #333;
+  color: #ffffff;
 `;
 
 const TotalValue = styled.span`

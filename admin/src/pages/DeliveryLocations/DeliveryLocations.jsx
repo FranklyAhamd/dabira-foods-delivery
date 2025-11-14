@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { FiEdit, FiTrash2, FiPlus, FiX } from 'react-icons/fi';
+import React, { useState, useEffect, useMemo } from 'react';
+import { FiEdit, FiTrash2, FiPlus, FiX, FiSearch } from 'react-icons/fi';
 import api from '../../config/api';
 import { useToast } from '../../context/ToastContext';
 import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
@@ -32,7 +32,9 @@ import {
   LoadingSpinner,
   StatusBadge,
   FloatingAddButton,
-  CardActions
+  CardActions,
+  SearchBar,
+  SearchInput
 } from './DeliveryLocationsStyles';
 
 const DeliveryLocations = () => {
@@ -42,6 +44,7 @@ const DeliveryLocations = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingLocation, setEditingLocation] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, location: null });
+  const [searchQuery, setSearchQuery] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     price: '',
@@ -167,6 +170,17 @@ const DeliveryLocations = () => {
     }
   };
 
+  // Filter locations based on search
+  const filteredLocations = useMemo(() => {
+    if (!searchQuery.trim()) return locations;
+    
+    const query = searchQuery.toLowerCase();
+    return locations.filter(location => 
+      location.name.toLowerCase().includes(query) ||
+      location.price.toString().includes(query)
+    );
+  }, [locations, searchQuery]);
+
   if (loading) {
     return (
       <Container>
@@ -181,13 +195,25 @@ const DeliveryLocations = () => {
     <Container>
       <PageTitle>Delivery Locations</PageTitle>
 
-      {locations.length === 0 ? (
+      <SearchBar>
+        <FiSearch size={16} />
+        <SearchInput
+          type="text"
+          placeholder="Search by name or price..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </SearchBar>
+
+      {filteredLocations.length === 0 ? (
         <EmptyMessage>
-          No delivery locations found. Click the + button to add one.
+          {locations.length === 0 
+            ? 'No delivery locations found. Click the + button to add one.'
+            : 'No delivery locations found matching your search criteria.'}
         </EmptyMessage>
       ) : (
         <GridContainer>
-          {locations.map((location) => (
+          {filteredLocations.map((location) => (
             <LocationCard key={location.id}>
               <CardHeader>
                 <CardTitle>{location.name}</CardTitle>

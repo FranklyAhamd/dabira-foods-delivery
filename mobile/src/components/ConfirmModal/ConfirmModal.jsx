@@ -16,12 +16,12 @@ const ModalOverlay = styled.div`
 `;
 
 const ModalContent = styled.div`
-  background: white;
+  background: #1a1a1a;
   border-radius: 12px;
   width: 90%;
   max-width: 400px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-  border: 1px solid #e5e7eb;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  border: 1px solid #2a2a2a;
   overflow: hidden;
 `;
 
@@ -30,7 +30,7 @@ const ModalHeader = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #2a2a2a;
 `;
 
 const IconContainer = styled.div`
@@ -51,7 +51,7 @@ const IconContainer = styled.div`
 const Title = styled.h2`
   font-size: 18px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: #ffffff;
   margin: 0;
 `;
 
@@ -61,7 +61,7 @@ const ModalBody = styled.div`
 
 const Message = styled.p`
   font-size: 14px;
-  color: #6b7280;
+  color: #b3b3b3;
   margin: 0;
   line-height: 1.5;
 `;
@@ -89,11 +89,11 @@ const Button = styled.button`
 `;
 
 const CancelButton = styled(Button)`
-  background-color: #f3f4f6;
-  color: #374151;
+  background-color: #2a2a2a;
+  color: #b3b3b3;
   
   &:hover {
-    background-color: #e5e7eb;
+    background-color: #333333;
   }
 `;
 

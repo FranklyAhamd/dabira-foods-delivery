@@ -384,4 +384,67 @@ export const AvailableBadge = styled.span`
   }
 `;
 
+export const FilterContainer = styled.div`
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  align-items: center;
+`;
+
+export const SearchBar = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 4px 8px;
+  height: 24px;
+  transition: all 0.15s;
+
+  &:focus-within {
+    border-color: #FF6B35;
+    box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.1);
+  }
+
+  svg {
+    color: #9ca3af;
+    flex-shrink: 0;
+  }
+`;
+
+export const SearchInput = styled.input`
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 12px;
+  background: transparent;
+  color: #374151;
+
+  &::placeholder {
+    color: #9ca3af;
+    font-size: 11px;
+  }
+`;
+
+export const FilterSelect = styled.select`
+  min-width: 150px;
+  height: 24px;
+  padding: 2px 6px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 12px;
+  background-color: white;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: #374151;
+
+  &:focus {
+    border-color: #FF6B35;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.1);
+  }
+`;
+
 

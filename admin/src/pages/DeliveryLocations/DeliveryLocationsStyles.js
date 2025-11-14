@@ -368,3 +368,39 @@ export const LoadingSpinner = styled.div`
   animation: ${spin} 1s linear infinite;
 `;
 
+export const SearchBar = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  transition: all 0.15s;
+
+  &:focus-within {
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+  }
+
+  svg {
+    color: #9ca3af;
+    flex-shrink: 0;
+  }
+`;
+
+export const SearchInput = styled.input`
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 12px;
+  background: transparent;
+  color: #374151;
+
+  &::placeholder {
+    color: #9ca3af;
+    font-size: 11px;
+  }
+`;
+

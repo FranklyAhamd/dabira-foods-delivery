@@ -177,17 +177,20 @@ const Profile = () => {
 const Container = styled.div`
   padding: 1rem;
   padding-bottom: 2rem;
+  background: #0a0a0a;
+  min-height: 100vh;
 `;
 
 const Header = styled.div`
   display: flex;
   align-items: center;
   gap: 1rem;
-  background-color: white;
+  background-color: #1a1a1a;
   padding: 1.5rem;
   border-radius: 12px;
   margin-bottom: 1rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  border: 1px solid #2a2a2a;
 `;
 
 const Avatar = styled.div`
@@ -210,31 +213,33 @@ const UserInfo = styled.div`
 const UserName = styled.h2`
   font-size: 1.25rem;
   font-weight: 700;
-  color: #333;
+  color: #ffffff;
   margin-bottom: 0.25rem;
 `;
 
 const UserEmail = styled.p`
   font-size: 0.875rem;
-  color: #666;
+  color: #b3b3b3;
 `;
 
 const Message = styled.div`
-  background-color: ${props => props.success ? '#e8f5e9' : '#fee'};
-  color: ${props => props.success ? '#2e7d32' : '#c33'};
+  background-color: ${props => props.success ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'};
+  color: ${props => props.success ? '#10b981' : '#ef4444'};
   padding: 0.875rem;
   border-radius: 8px;
   margin-bottom: 1rem;
   font-size: 0.875rem;
   text-align: center;
+  border: 1px solid ${props => props.success ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'};
 `;
 
 const Section = styled.div`
-  background-color: white;
+  background-color: #1a1a1a;
   border-radius: 12px;
   padding: 1.5rem;
   margin-bottom: 1rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  border: 1px solid #2a2a2a;
 `;
 
 const SectionHeader = styled.div`
@@ -247,7 +252,7 @@ const SectionHeader = styled.div`
 const SectionTitle = styled.h3`
   font-size: 1.125rem;
   font-weight: 600;
-  color: #333;
+  color: #ffffff;
 `;
 
 const EditButton = styled.button`
@@ -270,21 +275,23 @@ const Label = styled.label`
   display: block;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #666;
+  color: #b3b3b3;
   margin-bottom: 0.5rem;
 `;
 
 const Value = styled.div`
   font-size: 1rem;
-  color: #333;
+  color: #ffffff;
 `;
 
 const Input = styled.input`
   width: 100%;
   padding: 0.875rem;
-  border: 1px solid #ddd;
+  border: 1px solid #2a2a2a;
   border-radius: 6px;
   font-size: 1rem;
+  background-color: #1e1e1e;
+  color: #ffffff;
   
   &:focus {
     outline: none;
@@ -292,15 +299,19 @@ const Input = styled.input`
   }
   
   &:disabled {
-    background-color: #f5f5f5;
+    background-color: #121212;
     cursor: not-allowed;
+  }
+  
+  &::placeholder {
+    color: #4d4d4d;
   }
 `;
 
 const Helper = styled.span`
   display: block;
   font-size: 0.75rem;
-  color: #999;
+  color: #808080;
   margin-top: 0.25rem;
 `;
 
@@ -313,15 +324,15 @@ const ButtonGroup = styled.div`
 const CancelButton = styled.button`
   flex: 1;
   padding: 0.875rem;
-  border: 1px solid #ddd;
+  border: 1px solid #2a2a2a;
   border-radius: 6px;
   font-size: 1rem;
   font-weight: 600;
-  color: #666;
-  background-color: white;
+  color: #b3b3b3;
+  background-color: #1a1a1a;
   
   &:active:not(:disabled) {
-    background-color: #f5f5f5;
+    background-color: #121212;
   }
   
   &:disabled {
@@ -355,7 +366,7 @@ const MenuItem = styled.button`
   align-items: center;
   gap: 1rem;
   padding: 1rem 0;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #2a2a2a;
   text-align: left;
   background: none;
   
@@ -375,12 +386,12 @@ const MenuIcon = styled.span`
 const MenuText = styled.span`
   flex: 1;
   font-size: 1rem;
-  color: #333;
+  color: #ffffff;
 `;
 
 const MenuArrow = styled.span`
   font-size: 1.25rem;
-  color: #999;
+  color: #808080;
 `;
 
 const LogoutButton = styled.button`
@@ -404,7 +415,7 @@ const AppInfo = styled.div`
 
 const AppVersion = styled.p`
   font-size: 0.875rem;
-  color: #999;
+  color: #808080;
 `;
 
 export default Profile;

@@ -112,6 +112,8 @@ const Container = styled.div`
   margin: 0 auto;
   padding: 2rem 1rem;
   text-align: center;
+  background: #0a0a0a;
+  min-height: 100vh;
 `;
 
 const SuccessIcon = styled.div`
@@ -140,23 +142,24 @@ const SuccessIcon = styled.div`
 const Title = styled.h1`
   font-size: 2rem;
   font-weight: 700;
-  color: #333;
+  color: #ffffff;
   margin-bottom: 0.5rem;
 `;
 
 const Message = styled.p`
   font-size: 1rem;
-  color: #666;
+  color: #b3b3b3;
   margin-bottom: 2rem;
 `;
 
 const OrderInfo = styled.div`
-  background-color: white;
+  background-color: #1a1a1a;
   border-radius: 12px;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   text-align: left;
+  border: 1px solid #2a2a2a;
 `;
 
 const InfoRow = styled.div`
@@ -173,12 +176,12 @@ const InfoRow = styled.div`
 const InfoLabel = styled.span`
   font-size: 0.875rem;
   font-weight: 500;
-  color: #666;
+  color: #b3b3b3;
 `;
 
 const InfoValue = styled.span`
   font-size: 0.875rem;
-  color: #333;
+  color: #ffffff;
   text-align: right;
 `;
 
@@ -193,18 +196,19 @@ const StatusBadge = styled.span`
 `;
 
 const OrderSummary = styled.div`
-  background-color: white;
+  background-color: #1a1a1a;
   border-radius: 12px;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   text-align: left;
+  border: 1px solid #2a2a2a;
 `;
 
 const SummaryTitle = styled.h2`
   font-size: 1.125rem;
   font-weight: 600;
-  color: #333;
+  color: #ffffff;
   margin-bottom: 1rem;
 `;
 
@@ -229,20 +233,20 @@ const ItemQuantity = styled.span`
 
 const ItemName = styled.span`
   font-size: 0.875rem;
-  color: #333;
+  color: #ffffff;
 `;
 
 const ItemPrice = styled.span`
   font-size: 0.875rem;
   font-weight: 600;
   font-family: 'Space Grotesk', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-  color: #333;
+  color: #ffffff;
   letter-spacing: 0.01em;
 `;
 
 const Divider = styled.div`
   height: 1px;
-  background-color: #eee;
+  background-color: #2a2a2a;
   margin: 1rem 0;
 `;
 
@@ -255,7 +259,7 @@ const TotalRow = styled.div`
 const TotalLabel = styled.span`
   font-size: 1.125rem;
   font-weight: 700;
-  color: #333;
+  color: #ffffff;
 `;
 
 const TotalValue = styled.span`
@@ -273,8 +277,8 @@ const ButtonGroup = styled.div`
 `;
 
 const GuestMessage = styled.div`
-  background-color: #e3f2fd;
-  border: 1px solid #2196f3;
+  background-color: rgba(59, 130, 246, 0.2);
+  border: 1px solid #3b82f6;
   border-radius: 8px;
   padding: 1rem;
   margin-bottom: 1.5rem;
@@ -282,7 +286,7 @@ const GuestMessage = styled.div`
 `;
 
 const GuestMessageText = styled.p`
-  color: #1565c0;
+  color: #3b82f6;
   font-size: 0.875rem;
   margin: 0 0 0.75rem 0;
 `;

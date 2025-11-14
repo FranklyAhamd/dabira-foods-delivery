@@ -5,7 +5,70 @@ import io from 'socket.io-client';
 import api, { API_URL } from '../../config/api';
 import { useCart } from '../../context/CartContext';
 import { useToast } from '../../context/ToastContext';
+import { useScrollAnimation } from '../../hooks/useScrollAnimation';
 import { FiSearch, FiPlus, FiShoppingCart, FiRefreshCw, FiStar } from 'react-icons/fi';
+
+// Animated Product Card Wrapper Component
+const AnimatedProductCardWrapper = ({ item, index, isDeliveryOpen, navigate, handleAddToCart }) => {
+  const [cardRef, isVisible] = useScrollAnimation({ threshold: 0, rootMargin: '250px 0px 0px 0px' });
+  
+  return (
+    <AnimatedProductCard 
+      ref={cardRef}
+      $visible={isVisible}
+      $delay={index * 0.1}
+      onClick={() => !isDeliveryOpen ? null : navigate(`/menu/${item.id}`)}
+      $disabled={!isDeliveryOpen}
+    >
+      <ImageContainer>
+        <ProductImage 
+          $unavailable={!item.available}
+          src={item.image || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="#f5f5f5"/><text x="50%" y="50%" font-family="Arial" font-size="16" fill="#999" text-anchor="middle" dominant-baseline="middle">No Image</text></svg>'} 
+          alt={item.name}
+          onError={(e) => {
+            e.target.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="#f5f5f5"/><text x="50%" y="50%" font-family="Arial" font-size="16" fill="#999" text-anchor="middle" dominant-baseline="middle">No Image</text></svg>';
+          }}
+        />
+        {!item.available && (
+          <UnavailableBadge>Unavailable</UnavailableBadge>
+        )}
+      </ImageContainer>
+      
+      <ProductInfo>
+        <ProductName>{item.name}</ProductName>
+        <ProductDescription>{item.description}</ProductDescription>
+        
+        <ProductRating>
+          <StarIcon>
+            <FiStar size={14} />
+          </StarIcon>
+          <RatingText>4.5</RatingText>
+          <ReviewCount>(120+)</ReviewCount>
+        </ProductRating>
+
+        <ProductFooter>
+          <PriceContainer>
+            <Price $unavailable={!item.available}>₦{item.price.toFixed(2)}</Price>
+            <PriceSubtext>per serving</PriceSubtext>
+          </PriceContainer>
+          
+          <AddToCartButton 
+            onClick={(e) => handleAddToCart(item, e)}
+            disabled={!item.available || !isDeliveryOpen}
+            $unavailable={!item.available}
+            aria-label={item.available && isDeliveryOpen ? "Add to cart" : "Item unavailable or delivery closed"}
+          >
+            {item.available ? (
+              <FiPlus size={20} />
+            ) : (
+              <span style={{ fontSize: '12px' }}>✕</span>
+            )}
+          </AddToCartButton>
+        </ProductFooter>
+      </ProductInfo>
+    </AnimatedProductCard>
+  );
+};
 
 const Home = () => {
   const [menuItems, setMenuItems] = useState([]);
@@ -247,59 +310,15 @@ const Home = () => {
         </EmptyState>
       ) : (
         <ProductsGrid>
-          {filteredItems.map(item => (
-            <ProductCard 
-              key={item.id} 
-              onClick={() => !isDeliveryOpen ? null : navigate(`/menu/${item.id}`)}
-              $disabled={!isDeliveryOpen}
-            >
-              <ImageContainer>
-                <ProductImage 
-                  $unavailable={!item.available}
-                  src={item.image || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="#f5f5f5"/><text x="50%" y="50%" font-family="Arial" font-size="16" fill="#999" text-anchor="middle" dominant-baseline="middle">No Image</text></svg>'} 
-                  alt={item.name}
-                  onError={(e) => {
-                    e.target.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="#f5f5f5"/><text x="50%" y="50%" font-family="Arial" font-size="16" fill="#999" text-anchor="middle" dominant-baseline="middle">No Image</text></svg>';
-                  }}
-                />
-                {!item.available && (
-                  <UnavailableBadge>Unavailable</UnavailableBadge>
-                )}
-              </ImageContainer>
-              
-              <ProductInfo>
-                <ProductName>{item.name}</ProductName>
-                <ProductDescription>{item.description}</ProductDescription>
-                
-                <ProductRating>
-                  <StarIcon>
-                    <FiStar size={14} />
-                  </StarIcon>
-                  <RatingText>4.5</RatingText>
-                  <ReviewCount>(120+)</ReviewCount>
-                </ProductRating>
-
-                <ProductFooter>
-                  <PriceContainer>
-                    <Price $unavailable={!item.available}>₦{item.price.toFixed(2)}</Price>
-                    <PriceSubtext>per serving</PriceSubtext>
-                  </PriceContainer>
-                  
-                  <AddToCartButton 
-                    onClick={(e) => handleAddToCart(item, e)}
-                    disabled={!item.available || !isDeliveryOpen}
-                    $unavailable={!item.available}
-                    aria-label={item.available && isDeliveryOpen ? "Add to cart" : "Item unavailable or delivery closed"}
-                  >
-                    {item.available ? (
-                      <FiPlus size={20} />
-                    ) : (
-                      <span style={{ fontSize: '12px' }}>✕</span>
-                    )}
-                  </AddToCartButton>
-                </ProductFooter>
-              </ProductInfo>
-            </ProductCard>
+          {filteredItems.map((item, index) => (
+            <AnimatedProductCardWrapper
+              key={item.id}
+              index={index}
+              item={item}
+              isDeliveryOpen={isDeliveryOpen}
+              navigate={navigate}
+              handleAddToCart={handleAddToCart}
+            />
           ))}
         </ProductsGrid>
       )}
@@ -310,7 +329,7 @@ const Home = () => {
 const Container = styled.div`
   padding: 0;
   padding-bottom: 2rem;
-  background: #f8f9fa;
+  background: #0a0a0a;
 `;
 
 const HeroSection = styled.div`
@@ -347,7 +366,7 @@ const SearchIcon = styled.span`
   transform: translateY(-50%);
   font-size: 1.25rem;
   z-index: 1;
-  color: #999;
+  color: #808080;
 `;
 
 const SearchInput = styled.input`
@@ -356,17 +375,20 @@ const SearchInput = styled.input`
   border: none;
   border-radius: 12px;
   font-size: 0.9375rem;
-  background: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  background: #1a1a1a;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   transition: all 0.3s ease;
+  border: 1px solid #2a2a2a;
   
   &:focus {
     outline: none;
-    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.15);
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+    border-color: #667eea;
   }
   
   &::placeholder {
-    color: #999;
+    color: #4d4d4d;
   }
 `;
 
@@ -377,8 +399,9 @@ const Categories = styled.div`
   position: ${props => props.$sticky ? 'sticky' : 'static'};
   top: ${props => props.$sticky ? '0' : 'auto'};
   z-index: 5;
-  background: ${props => props.$sticky ? 'linear-gradient(180deg, #f8f9fa 70%, rgba(248,249,250,0))' : 'transparent'};
+  background: ${props => props.$sticky ? 'linear-gradient(180deg, #0a0a0a 70%, rgba(10,10,10,0))' : 'transparent'};
   padding-top: ${props => props.$sticky ? '0.5rem' : '0'};
+`;
   
   &::-webkit-scrollbar {
     display: none;
@@ -398,10 +421,10 @@ const CategoryChip = styled.button`
   font-weight: 600;
   white-space: nowrap;
   transition: all 0.2s ease;
-  background: ${props => props.$active ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'white'};
-  color: ${props => props.$active ? 'white' : '#333'};
-  border: none;
-  box-shadow: ${props => props.$active ? '0 4px 12px rgba(102, 126, 234, 0.3)' : '0 1px 3px rgba(0, 0, 0, 0.1)'};
+  background: ${props => props.$active ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#1a1a1a'};
+  color: ${props => props.$active ? 'white' : '#ffffff'};
+  border: ${props => props.$active ? 'none' : '1px solid #2a2a2a'};
+  box-shadow: ${props => props.$active ? '0 4px 12px rgba(102, 126, 234, 0.3)' : '0 1px 3px rgba(0, 0, 0, 0.3)'};
   
   &:active {
     transform: scale(0.95);
@@ -422,20 +445,50 @@ const ProductsGrid = styled.div`
 `;
 
 const ProductCard = styled.div`
-  background: white;
+  background: #1a1a1a;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   cursor: ${props => props.$disabled ? 'not-allowed' : 'pointer'};
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
   position: relative;
   opacity: ${props => props.$disabled ? 0.6 : 1};
+  border: 1px solid #2a2a2a;
   
   &:active {
     transform: ${props => props.$disabled ? 'none' : 'scale(0.98)'};
     box-shadow: ${props => props.$disabled ? '0 2px 8px rgba(0, 0, 0, 0.08)' : '0 4px 12px rgba(0, 0, 0, 0.12)'};
+  }
+`;
+
+const AnimatedProductCard = styled(ProductCard)`
+  opacity: ${props => props.$visible ? 1 : 0};
+  transform: ${props => props.$visible 
+    ? 'translateY(0) scale(1)' 
+    : 'translateY(30px) scale(0.95)'};
+  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition-delay: ${props => props.$delay}s;
+  
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  
+  ${props => props.$visible && `
+    animation: fadeInUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) ${props.$delay}s both;
+  `}
+  
+  &:hover {
+    transform: ${props => props.$visible ? 'translateY(-5px) scale(1.02)' : 'translateY(30px) scale(0.95)'};
+    box-shadow: ${props => props.$visible ? '0 8px 24px rgba(102, 126, 234, 0.3)' : '0 2px 8px rgba(0, 0, 0, 0.3)'};
   }
 `;
 
@@ -444,7 +497,7 @@ const ImageContainer = styled.div`
   width: 100%;
   padding-top: 100%; /* Square aspect ratio */
   overflow: hidden;
-  background: #f8f9fa;
+  background: #121212;
 `;
 
 const ProductImage = styled.img`
@@ -544,7 +597,7 @@ const ProductInfo = styled.div`
 const ProductName = styled.h3`
   font-size: 0.9375rem;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #ffffff;
   margin-bottom: 0.25rem;
   line-height: 1.3;
   display: -webkit-box;
@@ -555,7 +608,7 @@ const ProductName = styled.h3`
 
 const ProductDescription = styled.p`
   font-size: 0.75rem;
-  color: #666;
+  color: #b3b3b3;
   margin-bottom: 0.5rem;
   line-height: 1.4;
   display: -webkit-box;
@@ -581,12 +634,12 @@ const StarIcon = styled.span`
 const RatingText = styled.span`
   font-size: 0.8125rem;
   font-weight: 600;
-  color: #1a1a1a;
+  color: #ffffff;
 `;
 
 const ReviewCount = styled.span`
   font-size: 0.75rem;
-  color: #999;
+  color: #808080;
 `;
 
 const ProductFooter = styled.div`
@@ -613,7 +666,7 @@ const Price = styled.div`
 
 const PriceSubtext = styled.span`
   font-size: 0.6875rem;
-  color: #999;
+  color: #808080;
   margin-top: 0.125rem;
 `;
 
@@ -622,9 +675,9 @@ const AddToCartButton = styled.button`
   height: 36px;
   border-radius: 50%;
   background: ${props => props.$unavailable 
-    ? '#e5e7eb' 
+    ? '#2a2a2a' 
     : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'};
-  color: ${props => props.$unavailable ? '#999' : 'white'};
+  color: ${props => props.$unavailable ? '#4d4d4d' : 'white'};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -665,7 +718,7 @@ const Spinner = styled.div`
 `;
 
 const LoadingText = styled.p`
-  color: #666;
+  color: #b3b3b3;
   font-size: 1rem;
 `;
 
@@ -686,14 +739,14 @@ const ErrorIcon = styled.div`
 `;
 
 const ErrorText = styled.p`
-  color: #c33;
+  color: #ef4444;
   font-size: 1rem;
   font-weight: 500;
   margin-bottom: 0.5rem;
 `;
 
 const ErrorHelp = styled.p`
-  color: #666;
+  color: #b3b3b3;
   font-size: 0.875rem;
   max-width: 300px;
   margin-bottom: 1rem;
@@ -732,7 +785,7 @@ const EmptyIcon = styled.div`
 `;
 
 const EmptyText = styled.p`
-  color: #666;
+  color: #b3b3b3;
   font-size: 1.125rem;
 `;
 
@@ -744,9 +797,10 @@ const ClosedContainer = styled.div`
   justify-content: center;
   padding: 2rem;
   margin: 1rem;
-  background: white;
+  background: #1a1a1a;
   border-radius: 16px;
-  box-shadow: 0 6px 24px rgba(0,0,0,0.08);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.5);
+  border: 1px solid #2a2a2a;
 `;
 
 const ClosedEmoji = styled.div`
@@ -757,13 +811,13 @@ const ClosedEmoji = styled.div`
 const ClosedTitle = styled.h2`
   font-size: 1.5rem;
   font-weight: 800;
-  color: #1a1a1a;
+  color: #ffffff;
   margin-bottom: 0.25rem;
 `;
 
 const ClosedText = styled.p`
   font-size: 0.95rem;
-  color: #666;
+  color: #b3b3b3;
   text-align: center;
 `;
 
@@ -775,13 +829,13 @@ const CategorySelectWrapper = styled.div`
 const CategorySelect = styled.select`
   width: 100%;
   padding: 0.65rem 2.25rem 0.65rem 1rem;
-  border: none;
+  border: 1px solid #2a2a2a;
   border-radius: 24px;
   font-size: 0.95rem;
   font-weight: 600;
-  background: linear-gradient(90deg, #fff 80%, #f3f4f6 100%);
-  box-shadow: 0 1px 5px 0 rgba(150, 150, 170, 0.10);
-  color: #222;
+  background: #1a1a1a;
+  box-shadow: 0 1px 5px 0 rgba(0, 0, 0, 0.3);
+  color: #ffffff;
   appearance: none;
   outline: none;
   position: relative;
@@ -793,14 +847,14 @@ const CategorySelect = styled.select`
   background-position: right 0.75rem center;
   background-size: 22px 22px;
   &:focus {
-    box-shadow: 0 3px 18px rgba(102, 126, 234, 0.13);
+    box-shadow: 0 3px 18px rgba(102, 126, 234, 0.3);
     border-color: #667eea;
   }
 
   option {
     font-size: 1rem;
-    color: #222;
-    background: white;
+    color: #ffffff;
+    background: #1a1a1a;
   }
 `;
 

@@ -12,8 +12,8 @@ const GlobalStyles = createGlobalStyle`
       'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    color: #1a1a1a;
+    background: #0a0a0a;
+    color: #ffffff;
     overflow-x: hidden;
     line-height: 1.6;
   }
@@ -63,16 +63,16 @@ const GlobalStyles = createGlobalStyle`
   }
 
   ::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: #1a1a1a;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #ff6b6b 0%, #ee5a6f 100%);
+    background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
     border-radius: 4px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, #ee5a6f 0%, #ff6b6b 100%);
+    background: linear-gradient(180deg, #764ba2 0%, #667eea 100%);
   }
 
   /* Prevent text selection on buttons */
@@ -102,7 +102,7 @@ const GlobalStyles = createGlobalStyle`
 
   /* Modern focus styles */
   *:focus-visible {
-    outline: 2px solid #ff6b6b;
+    outline: 2px solid #667eea;
     outline-offset: 2px;
   }
 `;

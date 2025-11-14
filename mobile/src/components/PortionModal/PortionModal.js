@@ -128,15 +128,16 @@ const ModalOverlay = styled.div`
 `;
 
 const ModalContent = styled.div`
-  background: white;
+  background: #1a1a1a;
   border-radius: 16px;
   width: 100%;
   max-width: 340px;
   max-height: 85vh;
   overflow-y: auto;
   position: relative;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   animation: slideUp 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid #2a2a2a;
 
   @keyframes slideUp {
     from {
@@ -154,7 +155,7 @@ const CloseButton = styled.button`
   position: absolute;
   top: 0.75rem;
   right: 0.75rem;
-  background: rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.05);
   border: none;
   border-radius: 10px;
   width: 32px;
@@ -163,11 +164,11 @@ const CloseButton = styled.button`
   align-items: center;
   justify-content: center;
   z-index: 10;
-  color: #4b5563;
+  color: #b3b3b3;
   transition: all 0.2s;
   
   &:active {
-    background: rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.1);
     transform: scale(0.95);
   }
 `;
@@ -187,14 +188,14 @@ const ItemInfo = styled.div`
 const ItemName = styled.h2`
   font-size: 1.125rem;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #ffffff;
   margin-bottom: 0.375rem;
   line-height: 1.3;
 `;
 
 const ItemDescription = styled.p`
   font-size: 0.8125rem;
-  color: #666;
+  color: #b3b3b3;
   margin-bottom: 0.75rem;
   line-height: 1.4;
   display: -webkit-box;
@@ -218,7 +219,7 @@ const PortionSection = styled.div`
 const PortionLabel = styled.div`
   font-size: 0.875rem;
   font-weight: 600;
-  color: #333;
+  color: #ffffff;
   margin-bottom: 0.75rem;
   text-align: center;
 `;
@@ -253,28 +254,28 @@ const PortionButton = styled.button`
   &:disabled {
     opacity: 0.4;
     cursor: not-allowed;
-    background: #e5e7eb;
+    background: #2a2a2a;
   }
 `;
 
 const PortionInput = styled.input`
   width: 70px;
   height: 40px;
-  border: 2px solid #e5e7eb;
+  border: 2px solid #2a2a2a;
   border-radius: 10px;
   text-align: center;
   font-size: 1.125rem;
   font-weight: 700;
   font-family: 'Space Grotesk', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-  color: #1a1a1a;
-  background: #f8f9fa;
+  color: #ffffff;
+  background: #121212;
   transition: all 0.2s;
   
   &:focus {
     outline: none;
     border-color: #667eea;
-    background: white;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    background: #1a1a1a;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
   }
   
   &::-webkit-inner-spin-button,
@@ -289,16 +290,16 @@ const TotalSection = styled.div`
   justify-content: space-between;
   align-items: center;
   padding: 0.875rem 1.25rem;
-  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  background: linear-gradient(135deg, #121212 0%, #1a1a1a 100%);
   margin: 0 1.25rem 1rem;
   border-radius: 10px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #2a2a2a;
 `;
 
 const TotalLabel = styled.span`
   font-size: 0.9375rem;
   font-weight: 600;
-  color: #4b5563;
+  color: #b3b3b3;
 `;
 
 const TotalValue = styled.span`
@@ -319,6 +320,10 @@ const WarningText = styled.div`
   margin-bottom: 0.75rem;
   padding: 0 1.25rem;
   font-weight: 500;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 6px;
+  padding: 0.5rem;
+  margin: 0 1.25rem 0.75rem;
 `;
 
 const ConfirmButton = styled.button`

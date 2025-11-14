@@ -133,14 +133,14 @@ const CardContainer = styled.div`
   bottom: 100px;
   left: 0;
   right: 0;
-  background: white;
+  background: #1a1a1a;
   border-radius: 16px 16px 0 0;
-  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.5);
   max-height: calc(100vh - 180px);
   display: flex;
   flex-direction: column;
   z-index: 101;
-  border-top: 1px solid rgba(102, 126, 234, 0.1);
+  border-top: 1px solid #2a2a2a;
   transform: ${props => props.$isHidden ? 'translateY(calc(100% + 100px))' : 'translateY(0)'};
   opacity: ${props => props.$isHidden ? 0 : 1};
   pointer-events: ${props => props.$isHidden ? 'none' : 'auto'};
@@ -197,14 +197,14 @@ const CardHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid #e5e7eb;
-  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-bottom: 1px solid #2a2a2a;
+  background: linear-gradient(135deg, #121212 0%, #1a1a1a 100%);
 `;
 
 const CardTitle = styled.h3`
   font-size: 0.875rem;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #ffffff;
   letter-spacing: -0.01em;
 `;
 
@@ -240,7 +240,7 @@ const PlateItem = styled.div`
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 0;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #2a2a2a;
   
   &:last-child {
     border-bottom: none;
@@ -267,7 +267,7 @@ const ItemDetails = styled.div`
 const ItemName = styled.h4`
   font-size: 0.75rem;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #ffffff;
   line-height: 1.2;
   display: -webkit-box;
   -webkit-line-clamp: 1;
@@ -285,25 +285,25 @@ const PortionButton = styled.button`
   width: 20px;
   height: 20px;
   border-radius: 4px;
-  background: #f0f0f0;
+  background: #2a2a2a;
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.75rem;
   font-weight: 700;
-  color: #4b5563;
+  color: #b3b3b3;
   transition: all 0.15s;
   
   &:active {
-    background: #e5e7eb;
+    background: #333333;
     transform: scale(0.95);
   }
 `;
 
 const PortionValue = styled.span`
   font-size: 0.6875rem;
-  color: #6b7280;
+  color: #b3b3b3;
   min-width: 32px;
   font-weight: 700;
   text-align: center;
@@ -346,8 +346,8 @@ const RemoveButton = styled.button`
 
 const CardFooter = styled.div`
   padding: 0.375rem 0.75rem;
-  border-top: 1px solid #e5e7eb;
-  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-top: 1px solid #2a2a2a;
+  background: linear-gradient(135deg, #121212 0%, #1a1a1a 100%);
 `;
 
 const TotalSection = styled.div`
@@ -356,15 +356,15 @@ const TotalSection = styled.div`
   align-items: center;
   margin-bottom: 0.375rem;
   padding: 0.375rem 0.625rem;
-  background: white;
+  background: #121212;
   border-radius: 6px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #2a2a2a;
 `;
 
 const TotalLabel = styled.span`
   font-size: 0.8125rem;
   font-weight: 600;
-  color: #4b5563;
+  color: #b3b3b3;
 `;
 
 const TotalValue = styled.span`
@@ -385,7 +385,7 @@ const ActionButtons = styled.div`
 
 const AddMoreButton = styled.button`
   flex: 1;
-  background: white;
+  background: #1a1a1a;
   color: #667eea;
   border: 1.5px solid #667eea;
   padding: 0.4rem 0.5rem;
@@ -400,7 +400,7 @@ const AddMoreButton = styled.button`
   white-space: nowrap;
   
   &:active {
-    background: #f0f4ff;
+    background: rgba(102, 126, 234, 0.2);
     transform: scale(0.97);
   }
   

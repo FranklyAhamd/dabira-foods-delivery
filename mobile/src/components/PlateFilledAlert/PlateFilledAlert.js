@@ -55,14 +55,15 @@ const Overlay = styled.div`
 `;
 
 const AlertContainer = styled.div`
-  background: white;
+  background: #1a1a1a;
   border-radius: 20px;
   width: 100%;
   max-width: 360px;
   padding: 1.5rem;
   position: relative;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid #2a2a2a;
 
   @keyframes slideUp {
     from {
@@ -80,7 +81,7 @@ const CloseButton = styled.button`
   position: absolute;
   top: 1rem;
   right: 1rem;
-  background: rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.05);
   border: none;
   border-radius: 8px;
   width: 32px;
@@ -88,12 +89,12 @@ const CloseButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6b7280;
+  color: #b3b3b3;
   cursor: pointer;
   transition: all 0.2s;
 
   &:active {
-    background: rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.1);
     transform: scale(0.95);
   }
 `;
@@ -108,7 +109,7 @@ const IconContainer = styled.div`
 const Title = styled.h2`
   font-size: 1.25rem;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #ffffff;
   text-align: center;
   margin-bottom: 0.75rem;
   font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
@@ -116,7 +117,7 @@ const Title = styled.h2`
 
 const Message = styled.p`
   font-size: 0.9375rem;
-  color: #4b5563;
+  color: #b3b3b3;
   text-align: center;
   line-height: 1.6;
   margin-bottom: 1.5rem;

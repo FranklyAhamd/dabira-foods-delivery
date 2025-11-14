@@ -123,6 +123,8 @@ const MyOrders = () => {
 const Container = styled.div`
   padding: 1rem;
   padding-bottom: 2rem;
+  background: #0a0a0a;
+  min-height: 100vh;
 `;
 
 const Header = styled.div`
@@ -132,7 +134,7 @@ const Header = styled.div`
 const Title = styled.h1`
   font-size: 1.75rem;
   font-weight: 700;
-  color: #333;
+  color: #ffffff;
 `;
 
 const OrdersList = styled.div`
@@ -142,16 +144,17 @@ const OrdersList = styled.div`
 `;
 
 const OrderCard = styled.div`
-  background-color: white;
+  background-color: #1a1a1a;
   border-radius: 12px;
   padding: 1.25rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
+  border: 1px solid #2a2a2a;
   
   &:active {
     transform: scale(0.98);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
   }
 `;
 
@@ -165,7 +168,7 @@ const OrderHeader = styled.div`
 const OrderId = styled.span`
   font-size: 1rem;
   font-weight: 600;
-  color: #333;
+  color: #ffffff;
 `;
 
 const StatusBadge = styled.span`
@@ -180,7 +183,7 @@ const StatusBadge = styled.span`
 
 const OrderDate = styled.div`
   font-size: 0.875rem;
-  color: #666;
+  color: #b3b3b3;
   margin-bottom: 1rem;
 `;
 
@@ -190,13 +193,13 @@ const OrderItems = styled.div`
 
 const OrderItem = styled.div`
   font-size: 0.875rem;
-  color: #333;
+  color: #ffffff;
   margin-bottom: 0.25rem;
 `;
 
 const MoreItems = styled.div`
   font-size: 0.875rem;
-  color: #666;
+  color: #b3b3b3;
   font-style: italic;
 `;
 
@@ -205,7 +208,7 @@ const OrderFooter = styled.div`
   justify-content: space-between;
   align-items: center;
   padding-top: 1rem;
-  border-top: 1px solid #eee;
+  border-top: 1px solid #2a2a2a;
 `;
 
 const OrderTotal = styled.span`
@@ -218,7 +221,7 @@ const OrderTotal = styled.span`
 
 const ViewDetails = styled.span`
   font-size: 0.875rem;
-  color: #2196F3;
+  color: #3b82f6;
   font-weight: 600;
 `;
 
@@ -234,7 +237,7 @@ const LoadingContainer = styled.div`
 const Spinner = styled.div`
   width: 40px;
   height: 40px;
-  border: 3px solid #f3f3f3;
+  border: 3px solid #2a2a2a;
   border-top: 3px solid #FF6B35;
   border-radius: 50%;
   animation: spin 1s linear infinite;
@@ -246,7 +249,7 @@ const Spinner = styled.div`
 `;
 
 const LoadingText = styled.p`
-  color: #666;
+  color: #b3b3b3;
   font-size: 1rem;
 `;
 
@@ -261,7 +264,7 @@ const ErrorContainer = styled.div`
 `;
 
 const ErrorText = styled.p`
-  color: #c33;
+  color: #ef4444;
   font-size: 1rem;
   text-align: center;
 `;
@@ -297,13 +300,13 @@ const EmptyIcon = styled.div`
 const EmptyTitle = styled.h2`
   font-size: 1.5rem;
   font-weight: 700;
-  color: #333;
+  color: #ffffff;
   margin-bottom: 0.5rem;
 `;
 
 const EmptyText = styled.p`
   font-size: 1rem;
-  color: #666;
+  color: #b3b3b3;
   margin-bottom: 2rem;
 `;
 

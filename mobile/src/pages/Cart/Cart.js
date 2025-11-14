@@ -361,7 +361,7 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   min-height: calc(100vh - 60px);
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  background: #0a0a0a;
 `;
 
 const Header = styled.div`
@@ -369,12 +369,13 @@ const Header = styled.div`
   justify-content: space-between;
   align-items: center;
   padding: 0.625rem 0.875rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
   color: white;
-  box-shadow: 0 2px 12px rgba(102, 126, 234, 0.25);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
   position: relative;
   overflow: hidden;
   min-height: 48px;
+  border-bottom: 1px solid #2a2a2a;
   
   &::before {
     content: '';
@@ -418,7 +419,7 @@ const ClearButton = styled.button`
   color: white;
   font-size: 0.6875rem;
   font-weight: 600;
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.1);
   padding: 0.3rem 0.625rem;
   border-radius: 6px;
   backdrop-filter: blur(10px);
@@ -427,7 +428,7 @@ const ClearButton = styled.button`
   white-space: nowrap;
   
   &:active {
-    background: rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.2);
     transform: scale(0.95);
   }
 `;
@@ -485,16 +486,16 @@ const PlateWrapper = styled.div`
 `;
 
 const CompactPlateCard = styled.div`
-  background: white;
+  background: #1a1a1a;
   border-radius: 8px;
   padding: 0.625rem;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
   gap: 0.625rem;
   cursor: pointer;
   transition: all 0.2s;
-  border: ${props => props.$expanded ? '1.5px solid #667eea' : '1px solid transparent'};
+  border: ${props => props.$expanded ? '1.5px solid #667eea' : '1px solid #2a2a2a'};
   position: relative;
   overflow: hidden;
   
@@ -513,7 +514,7 @@ const CompactPlateCard = styled.div`
   
   &:active {
     transform: scale(0.98);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
   }
 `;
 
@@ -525,7 +526,7 @@ const PlateSVGContainer = styled.div`
   justify-content: center;
   flex-shrink: 0;
   position: relative;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  background: linear-gradient(135deg, #1a1a1a 0%, #121212 100%);
   border-radius: 8px;
   padding: 0.25rem;
 `;
@@ -575,7 +576,7 @@ const PlateTotalCompact = styled.div`
 
 const PlateItemsCount = styled.div`
   font-size: 0.6875rem;
-  color: #6c757d;
+  color: #b3b3b3;
   font-weight: 500;
   line-height: 1.2;
 `;
@@ -591,21 +592,21 @@ const EditButton = styled.button`
   height: 28px;
   border-radius: 6px;
   background: ${props => props.disabled 
-    ? 'linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%)' 
-    : 'linear-gradient(135deg, #f0f4ff 0%, #e8edff 100%)'};
-  color: ${props => props.disabled ? '#9ca3af' : '#667eea'};
+    ? '#2a2a2a' 
+    : 'rgba(102, 126, 234, 0.2)'};
+  color: ${props => props.disabled ? '#4d4d4d' : '#667eea'};
   display: flex;
   align-items: center;
   justify-content: center;
   border: none;
-  box-shadow: ${props => props.disabled ? 'none' : '0 1px 4px rgba(102, 126, 234, 0.15)'};
+  box-shadow: ${props => props.disabled ? 'none' : '0 1px 4px rgba(102, 126, 234, 0.3)'};
   transition: all 0.2s;
   cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
   
   &:active:not(:disabled) {
-    background: linear-gradient(135deg, #e0e8ff 0%, #d8e0ff 100%);
+    background: rgba(102, 126, 234, 0.3);
     transform: scale(0.92);
-    box-shadow: 0 1px 2px rgba(102, 126, 234, 0.2);
+    box-shadow: 0 1px 2px rgba(102, 126, 234, 0.4);
   }
   
   &:disabled {
@@ -622,19 +623,19 @@ const DeleteButton = styled.button`
   width: 28px;
   height: 28px;
   border-radius: 6px;
-  background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%);
+  background: rgba(239, 68, 68, 0.2);
   color: #ef4444;
   display: flex;
   align-items: center;
   justify-content: center;
   border: none;
-  box-shadow: 0 1px 4px rgba(239, 68, 68, 0.15);
+  box-shadow: 0 1px 4px rgba(239, 68, 68, 0.3);
   transition: all 0.2s;
   
   &:active {
-    background: linear-gradient(135deg, #ffe0e0 0%, #ffd8d8 100%);
+    background: rgba(239, 68, 68, 0.3);
     transform: scale(0.92);
-    box-shadow: 0 1px 2px rgba(239, 68, 68, 0.2);
+    box-shadow: 0 1px 2px rgba(239, 68, 68, 0.4);
   }
   
   svg {
@@ -646,9 +647,9 @@ const DeleteButton = styled.button`
 const ExpandedContent = styled.div`
   margin-top: 0.375rem;
   padding: 0.375rem;
-  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  background: #121212;
   border-radius: 8px;
-  border: 1px solid rgba(102, 126, 234, 0.1);
+  border: 1px solid #2a2a2a;
   animation: slideDown 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   
   @keyframes slideDown {
@@ -666,12 +667,13 @@ const ExpandedContent = styled.div`
 const CompactCartItem = styled.div`
   display: flex;
   gap: 0.375rem;
-  background: white;
+  background: #1a1a1a;
   padding: 0.375rem;
   border-radius: 6px;
   margin-bottom: 0.375rem;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
   transition: all 0.2s;
+  border: 1px solid #2a2a2a;
   
   &:last-child {
     margin-bottom: 0;
@@ -679,7 +681,7 @@ const CompactCartItem = styled.div`
   
   &:active {
     transform: scale(0.98);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   }
 `;
 
@@ -703,7 +705,7 @@ const ItemDetailsCompact = styled.div`
 const ItemNameCompact = styled.div`
   font-size: 0.75rem;
   font-weight: 700;
-  color: #212529;
+  color: #ffffff;
   line-height: 1.2;
   letter-spacing: -0.1px;
   overflow: hidden;
@@ -713,7 +715,7 @@ const ItemNameCompact = styled.div`
 
 const ItemPriceCompact = styled.div`
   font-size: 0.6875rem;
-  color: #6c757d;
+  color: #b3b3b3;
   font-weight: 500;
   font-family: 'Space Grotesk', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   letter-spacing: 0.01em;
@@ -754,7 +756,7 @@ const QuantityButtonCompact = styled.button`
 const QuantityValueCompact = styled.span`
   font-size: 0.75rem;
   font-weight: 700;
-  color: #212529;
+  color: #ffffff;
   min-width: 18px;
   text-align: center;
   line-height: 1.2;
@@ -782,7 +784,7 @@ const ItemTotalCompact = styled.div`
 `;
 
 const RemoveButtonCompact = styled.button`
-  background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%);
+  background: rgba(239, 68, 68, 0.2);
   border: none;
   color: #ef4444;
   padding: 0.25rem;
@@ -790,11 +792,11 @@ const RemoveButtonCompact = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 1px 3px rgba(239, 68, 68, 0.15);
+  box-shadow: 0 1px 3px rgba(239, 68, 68, 0.3);
   transition: all 0.2s;
   
   &:active {
-    background: linear-gradient(135deg, #ffe0e0 0%, #ffd8d8 100%);
+    background: rgba(239, 68, 68, 0.3);
     transform: scale(0.9);
   }
   
@@ -805,10 +807,10 @@ const RemoveButtonCompact = styled.button`
 `;
 
 const Footer = styled.div`
-  background: white;
+  background: #1a1a1a;
   padding: 0.75rem 0.875rem calc(0.25rem + 20px + env(safe-area-inset-bottom));
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+  border-top: 1px solid #2a2a2a;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
   position: relative;
   
   &::before {
@@ -818,16 +820,16 @@ const Footer = styled.div`
     left: 0;
     right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent 0%, rgba(102, 126, 234, 0.2) 50%, transparent 100%);
+    background: linear-gradient(90deg, transparent 0%, rgba(102, 126, 234, 0.4) 50%, transparent 100%);
   }
 `;
 
 const Summary = styled.div`
   margin-bottom: 0.625rem;
   padding: 0.625rem;
-  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  background: #121212;
   border-radius: 8px;
-  border: 1px solid rgba(102, 126, 234, 0.1);
+  border: 1px solid #2a2a2a;
 `;
 
 const SummaryRow = styled.div`
@@ -843,13 +845,13 @@ const SummaryRow = styled.div`
 
 const SummaryLabel = styled.span`
   font-size: 0.75rem;
-  color: #6c757d;
+  color: #b3b3b3;
   font-weight: 500;
 `;
 
 const SummaryValue = styled.span`
   font-size: 0.75rem;
-  color: #212529;
+  color: #ffffff;
   font-weight: 600;
   font-family: 'Space Grotesk', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   letter-spacing: 0.01em;
@@ -857,7 +859,7 @@ const SummaryValue = styled.span`
 
 const Divider = styled.div`
   height: 1px;
-  background: linear-gradient(90deg, transparent 0%, rgba(102, 126, 234, 0.2) 50%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(102, 126, 234, 0.4) 50%, transparent 100%);
   margin: 0.5rem 0;
 `;
 
@@ -871,7 +873,7 @@ const TotalRow = styled.div`
 const TotalLabel = styled.span`
   font-size: 0.875rem;
   font-weight: 800;
-  color: #212529;
+  color: #ffffff;
   letter-spacing: -0.2px;
 `;
 
@@ -887,16 +889,16 @@ const TotalValue = styled.span`
 `;
 
 const ClosedWarning = styled.div`
-  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-  border: 1px solid #ffc107;
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid #f59e0b;
   border-radius: 8px;
   padding: 0.5rem;
   margin-bottom: 0.625rem;
-  box-shadow: 0 2px 8px rgba(255, 193, 7, 0.2);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
 `;
 
 const ClosedWarningText = styled.p`
-  color: #856404;
+  color: #f59e0b;
   font-size: 0.75rem;
   text-align: center;
   margin: 0;
@@ -1035,18 +1037,19 @@ const EmptyContainer = styled.div`
 const EmptyIcon = styled.div`
   font-size: 4rem;
   margin-bottom: 0.75rem;
+  opacity: 0.8;
 `;
 
 const EmptyTitle = styled.h2`
   font-size: 1.25rem;
   font-weight: 700;
-  color: #333;
+  color: #ffffff;
   margin-bottom: 0.5rem;
 `;
 
 const EmptyText = styled.p`
   font-size: 0.9375rem;
-  color: #666;
+  color: #b3b3b3;
   margin-bottom: 1.5rem;
 `;
 

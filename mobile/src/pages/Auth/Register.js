@@ -152,10 +152,11 @@ const Container = styled.div`
 `;
 
 const FormCard = styled.div`
-  background: white;
+  background: #1a1a1a;
   border-radius: 12px;
   padding: 2rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  border: 1px solid #2a2a2a;
   
   @media (max-width: 768px) {
     padding: 1.5rem;
@@ -164,19 +165,20 @@ const FormCard = styled.div`
 
 const Title = styled.h2`
   font-size: 1.75rem;
-  color: #333;
+  color: #ffffff;
   margin-bottom: 1.5rem;
   text-align: center;
 `;
 
 const ErrorMessage = styled.div`
-  background-color: #fee;
-  color: #c33;
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
   padding: 0.75rem;
   border-radius: 6px;
   margin-bottom: 1rem;
   font-size: 0.875rem;
   text-align: center;
+  border: 1px solid rgba(239, 68, 68, 0.3);
 `;
 
 const Form = styled.form`
@@ -194,14 +196,16 @@ const FormGroup = styled.div`
 const Label = styled.label`
   font-size: 0.875rem;
   font-weight: 500;
-  color: #555;
+  color: #b3b3b3;
 `;
 
 const Input = styled.input`
   padding: 0.875rem;
-  border: 1px solid #ddd;
+  border: 1px solid #2a2a2a;
   border-radius: 6px;
   font-size: 1rem;
+  background-color: #1e1e1e;
+  color: #ffffff;
   transition: border-color 0.2s;
   
   &:focus {
@@ -210,12 +214,12 @@ const Input = styled.input`
   }
   
   &:disabled {
-    background-color: #f5f5f5;
+    background-color: #121212;
     cursor: not-allowed;
   }
   
   &::placeholder {
-    color: #999;
+    color: #4d4d4d;
   }
 `;
 
@@ -243,7 +247,7 @@ const Footer = styled.div`
   text-align: center;
   margin-top: 1.5rem;
   font-size: 0.875rem;
-  color: #666;
+  color: #b3b3b3;
 `;
 
 const StyledLink = styled(Link)`
