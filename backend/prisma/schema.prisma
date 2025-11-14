@@ -55,6 +55,8 @@ model Order {
   user              User?            @relation(fields: [userId], references: [id])
   deliveryLocationId String?
   deliveryLocation  DeliveryLocation? @relation(fields: [deliveryLocationId], references: [id])
+  deliveryAreaId    String?
+  deliveryArea      DeliveryArea?    @relation(fields: [deliveryAreaId], references: [id])
   status            OrderStatus      @default(PENDING)
   totalAmount       Float
   paymentStatus     PaymentStatus    @default(PENDING)
@@ -114,12 +116,24 @@ model Settings {
 }
 
 model DeliveryLocation {
-  id          String   @id @default(uuid())
+  id          String         @id @default(uuid())
   name        String
   price       Float
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isActive    Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
   orders      Order[]
+  areas       DeliveryArea[]
+}
+
+model DeliveryArea {
+  id                String           @id @default(uuid())
+  name              String
+  deliveryLocationId String
+  deliveryLocation  DeliveryLocation @relation(fields: [deliveryLocationId], references: [id], onDelete: Cascade)
+  isActive          Boolean          @default(true)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  orders            Order[]
 }
 

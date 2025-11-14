@@ -14,6 +14,12 @@ const getDeliveryLocations = async (req, res) => {
 
     const locations = await prisma.deliveryLocation.findMany({
       where: { isActive: true },
+      include: {
+        areas: {
+          where: { isActive: true },
+          orderBy: { name: 'asc' }
+        }
+      },
       orderBy: { name: 'asc' }
     });
 
@@ -43,6 +49,11 @@ const getAllDeliveryLocations = async (req, res) => {
     }
 
     const locations = await prisma.deliveryLocation.findMany({
+      include: {
+        areas: {
+          orderBy: { name: 'asc' }
+        }
+      },
       orderBy: { createdAt: 'desc' }
     });
 

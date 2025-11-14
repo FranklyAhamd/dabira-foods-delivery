@@ -2,42 +2,75 @@ import { useEffect, useRef, useState } from 'react';
 
 /**
  * Custom hook for scroll-triggered animations
- * Returns a ref to attach to elements and a boolean indicating if the element is visible
+ * Uses Intersection Observer for optimal performance
+ * @param {Object} options - Configuration options
+ * @param {number} options.threshold - Visibility threshold (0-1)
+ * @param {string} options.rootMargin - Root margin for intersection observer
+ * @param {boolean} options.triggerOnce - Only trigger animation once
+ * @returns {[React.RefObject, boolean]} - [ref, isVisible]
  */
-export const useScrollAnimation = (options = {}) => {
+export const useScrollAnimation = ({
+  threshold = 0.1,
+  rootMargin = '0px 0px -30px 0px',
+  triggerOnce = true,
+} = {}) => {
   const [isVisible, setIsVisible] = useState(false);
   const elementRef = useRef(null);
+  const observerRef = useRef(null);
 
   useEffect(() => {
     const element = elementRef.current;
     if (!element) return;
 
-    const observer = new IntersectionObserver(
+    // Check if element is already visible on mount
+    const checkInitialVisibility = () => {
+      const rect = element.getBoundingClientRect();
+      const windowHeight = window.innerHeight || document.documentElement.clientHeight;
+      const isInView = rect.top < windowHeight && rect.bottom > 0;
+      
+      if (isInView) {
+        // Small delay to ensure smooth animation even for initially visible items
+        setTimeout(() => setIsVisible(true), 100);
+        return true;
+      }
+      return false;
+    };
+
+    // If already visible and triggerOnce, don't set up observer
+    if (isVisible && triggerOnce) return;
+
+    // Check initial visibility
+    const wasInitiallyVisible = checkInitialVisibility();
+    if (wasInitiallyVisible && triggerOnce) return;
+
+    // Create observer
+    observerRef.current = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             setIsVisible(true);
-            // Optionally disconnect after first animation
-            if (options.once !== false) {
-              observer.unobserve(entry.target);
+            if (triggerOnce && observerRef.current) {
+              observerRef.current.unobserve(entry.target);
             }
-          } else if (options.once === false) {
+          } else if (!triggerOnce) {
             setIsVisible(false);
           }
         });
       },
       {
-        threshold: options.threshold || 0,
-        rootMargin: options.rootMargin || '200px 0px 0px 0px',
+        threshold,
+        rootMargin,
       }
     );
 
-    observer.observe(element);
+    observerRef.current.observe(element);
 
     return () => {
-      observer.disconnect();
+      if (observerRef.current && element) {
+        observerRef.current.unobserve(element);
+      }
     };
-  }, [options.threshold, options.rootMargin, options.once]);
+  }, [threshold, rootMargin, triggerOnce]);
 
   return [elementRef, isVisible];
 };

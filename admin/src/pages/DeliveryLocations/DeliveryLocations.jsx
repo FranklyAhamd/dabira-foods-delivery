@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { FiEdit, FiTrash2, FiPlus, FiX, FiSearch } from 'react-icons/fi';
+import { FiEdit, FiTrash2, FiPlus, FiX, FiSearch, FiMapPin } from 'react-icons/fi';
 import api from '../../config/api';
 import { useToast } from '../../context/ToastContext';
 import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
@@ -45,6 +45,13 @@ const DeliveryLocations = () => {
   const [editingLocation, setEditingLocation] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, location: null });
   const [searchQuery, setSearchQuery] = useState('');
+  const [showAreaModal, setShowAreaModal] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [areas, setAreas] = useState([]);
+  const [loadingAreas, setLoadingAreas] = useState(false);
+  const [areaFormData, setAreaFormData] = useState({ name: '', isActive: true });
+  const [editingArea, setEditingArea] = useState(null);
+  const [deleteAreaConfirm, setDeleteAreaConfirm] = useState({ isOpen: false, area: null });
   const [formData, setFormData] = useState({
     name: '',
     price: '',
@@ -170,6 +177,132 @@ const DeliveryLocations = () => {
     }
   };
 
+  const handleOpenAreaModal = async (location) => {
+    setSelectedLocation(location);
+    setShowAreaModal(true);
+    await fetchAreas(location.id);
+  };
+
+  const handleCloseAreaModal = () => {
+    setShowAreaModal(false);
+    setSelectedLocation(null);
+    setAreas([]);
+    setAreaFormData({ name: '', isActive: true });
+    setEditingArea(null);
+  };
+
+  const fetchAreas = async (locationId) => {
+    try {
+      setLoadingAreas(true);
+      const response = await api.get(`/delivery-areas/location/${locationId}`);
+      if (response.success) {
+        setAreas(response.data.areas);
+      }
+    } catch (err) {
+      error('Error fetching areas');
+    } finally {
+      setLoadingAreas(false);
+    }
+  };
+
+  const handleAreaSubmit = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!areaFormData.name.trim()) {
+      error('Area name is required');
+      return false;
+    }
+
+    try {
+      if (editingArea) {
+        const response = await api.put(`/delivery-areas/${editingArea.id}`, {
+          name: areaFormData.name.trim(),
+          isActive: areaFormData.isActive
+        });
+        if (response.success) {
+          success('Area updated successfully');
+          await fetchAreas(selectedLocation.id);
+          // Only update locations list, don't reload the page
+          const locationsResponse = await api.get('/delivery-locations');
+          if (locationsResponse.success) {
+            setLocations(locationsResponse.data.locations);
+          }
+          setAreaFormData({ name: '', isActive: true });
+          setEditingArea(null);
+        }
+      } else {
+        const response = await api.post('/delivery-areas', {
+          name: areaFormData.name.trim(),
+          deliveryLocationId: selectedLocation.id,
+          isActive: areaFormData.isActive
+        });
+        if (response.success) {
+          success('Area created successfully');
+          await fetchAreas(selectedLocation.id);
+          // Only update locations list, don't reload the page
+          const locationsResponse = await api.get('/delivery-locations');
+          if (locationsResponse.success) {
+            setLocations(locationsResponse.data.locations);
+          }
+          setAreaFormData({ name: '', isActive: true });
+        }
+      }
+      return false;
+    } catch (err) {
+      error(err.response?.data?.message || 'Error saving area');
+      return false;
+    }
+  };
+
+  const handleEditArea = (area) => {
+    setEditingArea(area);
+    setAreaFormData({
+      name: area.name,
+      isActive: area.isActive
+    });
+  };
+
+  const handleDeleteArea = async () => {
+    if (!deleteAreaConfirm.area) return;
+
+    try {
+      const response = await api.delete(`/delivery-areas/${deleteAreaConfirm.area.id}`);
+      if (response.success) {
+        success('Area deleted successfully');
+        await fetchAreas(selectedLocation.id);
+        // Only update locations list, don't reload the page
+        const locationsResponse = await api.get('/delivery-locations');
+        if (locationsResponse.success) {
+          setLocations(locationsResponse.data.locations);
+        }
+        setDeleteAreaConfirm({ isOpen: false, area: null });
+      }
+    } catch (err) {
+      error(err.response?.data?.message || 'Error deleting area');
+      setDeleteAreaConfirm({ isOpen: false, area: null });
+    }
+  };
+
+  const toggleAreaActive = async (area) => {
+    try {
+      const response = await api.put(`/delivery-areas/${area.id}`, {
+        isActive: !area.isActive
+      });
+      if (response.success) {
+        success(`Area ${!area.isActive ? 'activated' : 'deactivated'} successfully`);
+        await fetchAreas(selectedLocation.id);
+        // Only update locations list, don't reload the page
+        const locationsResponse = await api.get('/delivery-locations');
+        if (locationsResponse.success) {
+          setLocations(locationsResponse.data.locations);
+        }
+      }
+    } catch (err) {
+      error('Error updating area status');
+    }
+  };
+
   // Filter locations based on search
   const filteredLocations = useMemo(() => {
     if (!searchQuery.trim()) return locations;
@@ -230,8 +363,19 @@ const DeliveryLocations = () => {
                   <CardLabel>Delivery Fee:</CardLabel>
                   <CardValue>₦{parseFloat(location.price).toFixed(2)}</CardValue>
                 </CardRow>
+                <CardRow style={{ marginTop: '4px' }}>
+                  <CardLabel>Areas:</CardLabel>
+                  <CardValue>{location.areas?.length || 0}</CardValue>
+                </CardRow>
               </CardContent>
               <CardActions>
+                <ActionButton
+                  onClick={() => handleOpenAreaModal(location)}
+                  title="Manage Areas"
+                  style={{ color: '#667eea' }}
+                >
+                  <FiMapPin />
+                </ActionButton>
                 <ActionButton
                   $edit
                   onClick={() => handleOpenModal(location)}
@@ -322,6 +466,159 @@ const DeliveryLocations = () => {
         onConfirm={handleDelete}
         title="Delete Delivery Location"
         message={`Are you sure you want to delete "${deleteConfirm.location?.name}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
+
+      {/* Area Management Modal */}
+      {showAreaModal && selectedLocation && (
+        <ModalOverlay onClick={handleCloseAreaModal}>
+          <ModalContent onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+            <ModalHeader>
+              <ModalTitle>Manage Areas - {selectedLocation.name}</ModalTitle>
+              <CloseButton onClick={handleCloseAreaModal}>
+                <FiX />
+              </CloseButton>
+            </ModalHeader>
+            
+            <Form onSubmit={handleAreaSubmit} style={{ padding: '16px' }} noValidate>
+              <FormGroup>
+                <Label>Area Name *</Label>
+                <Input
+                  type="text"
+                  value={areaFormData.name}
+                  onChange={(e) => setAreaFormData({ ...areaFormData, name: e.target.value })}
+                  placeholder="e.g., Block A, Zone 1, etc."
+                  required
+                />
+              </FormGroup>
+
+              <FormGroup>
+                <Label>
+                  <input
+                    type="checkbox"
+                    checked={areaFormData.isActive}
+                    onChange={(e) => setAreaFormData({ ...areaFormData, isActive: e.target.checked })}
+                    style={{ marginRight: '8px' }}
+                  />
+                  Active (visible to customers)
+                </Label>
+              </FormGroup>
+
+              <ButtonGroup>
+                {editingArea && (
+                  <CancelButton 
+                    type="button" 
+                    onClick={() => {
+                      setEditingArea(null);
+                      setAreaFormData({ name: '', isActive: true });
+                    }}
+                  >
+                    Cancel Edit
+                  </CancelButton>
+                )}
+                <SubmitButton type="submit">
+                  {editingArea ? 'Update Area' : 'Add Area'}
+                </SubmitButton>
+              </ButtonGroup>
+            </Form>
+
+            <div style={{ padding: '0 16px 16px', maxHeight: '400px', overflowY: 'auto' }}>
+              <Label style={{ marginBottom: '8px', display: 'block' }}>Areas ({areas.length})</Label>
+              {loadingAreas ? (
+                <div style={{ textAlign: 'center', padding: '20px' }}>
+                  <LoadingSpinner />
+                </div>
+              ) : areas.length === 0 ? (
+                <EmptyMessage style={{ margin: 0, padding: '16px' }}>
+                  No areas yet. Add your first area above.
+                </EmptyMessage>
+              ) : (
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(3, 1fr)', 
+                  gap: '8px' 
+                }}>
+                  {areas.map((area) => (
+                    <div
+                      key={area.id}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        padding: '8px',
+                        background: '#f9fafb',
+                        borderRadius: '4px',
+                        border: '1px solid #e5e7eb',
+                        gap: '6px'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px' }}>
+                        <span style={{ 
+                          fontSize: '11px', 
+                          fontWeight: 500, 
+                          color: '#374151',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          flex: 1
+                        }}>
+                          {area.name}
+                        </span>
+                        <StatusBadge
+                          $active={area.isActive}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            toggleAreaActive(area);
+                          }}
+                          title={`Click to ${area.isActive ? 'deactivate' : 'activate'}`}
+                          style={{ fontSize: '8px', padding: '2px 6px', flexShrink: 0 }}
+                        >
+                          {area.isActive ? 'Active' : 'Inactive'}
+                        </StatusBadge>
+                      </div>
+                      <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end' }}>
+                        <ActionButton
+                          type="button"
+                          $edit
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleEditArea(area);
+                          }}
+                          title="Edit"
+                          style={{ width: '24px', height: '24px' }}
+                        >
+                          <FiEdit size={14} />
+                        </ActionButton>
+                        <ActionButton
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setDeleteAreaConfirm({ isOpen: true, area });
+                          }}
+                          title="Delete"
+                          style={{ width: '24px', height: '24px' }}
+                        >
+                          <FiTrash2 size={14} />
+                        </ActionButton>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </ModalContent>
+        </ModalOverlay>
+      )}
+
+      <ConfirmModal
+        isOpen={deleteAreaConfirm.isOpen}
+        onClose={() => setDeleteAreaConfirm({ isOpen: false, area: null })}
+        onConfirm={handleDeleteArea}
+        title="Delete Delivery Area"
+        message={`Are you sure you want to delete "${deleteAreaConfirm.area?.name}"? This action cannot be undone.`}
         confirmText="Delete"
         cancelText="Cancel"
       />

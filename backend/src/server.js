@@ -12,6 +12,7 @@ const orderRoutes = require('./routes/order.routes');
 const paymentRoutes = require('./routes/payment.routes');
 const settingsRoutes = require('./routes/settings.routes');
 const deliveryLocationRoutes = require('./routes/deliveryLocation.routes');
+const deliveryAreaRoutes = require('./routes/deliveryArea.routes');
 
 // Initialize Express app
 const app = express();
@@ -90,6 +91,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/delivery-locations', deliveryLocationRoutes);
+app.use('/api/delivery-areas', deliveryAreaRoutes);
 
 // Health check
 app.get('/api/health', async (req, res) => {

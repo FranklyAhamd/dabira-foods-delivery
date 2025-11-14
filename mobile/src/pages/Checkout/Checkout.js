@@ -26,6 +26,9 @@ const Checkout = () => {
   const [deliveryLocations, setDeliveryLocations] = useState([]);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [loadingLocations, setLoadingLocations] = useState(true);
+  const [deliveryAreas, setDeliveryAreas] = useState([]);
+  const [selectedArea, setSelectedArea] = useState(null);
+  const [loadingAreas, setLoadingAreas] = useState(false);
 
   useEffect(() => {
     fetchDeliveryStatus();
@@ -55,13 +58,65 @@ const Checkout = () => {
         setDeliveryLocations(response.data.locations);
         // Auto-select first location if available
         if (response.data.locations.length > 0) {
-          setSelectedLocation(response.data.locations[0]);
+          const firstLocation = response.data.locations[0];
+          setSelectedLocation(firstLocation);
+          // Fetch areas for the first location
+          if (firstLocation.areas && firstLocation.areas.length > 0) {
+            setDeliveryAreas(firstLocation.areas);
+            // Auto-select first area if available
+            if (firstLocation.areas.length > 0) {
+              setSelectedArea(firstLocation.areas[0]);
+            }
+          } else {
+            fetchAreasForLocation(firstLocation.id);
+          }
         }
       }
     } catch (e) {
       console.error('Error fetching delivery locations:', e);
     } finally {
       setLoadingLocations(false);
+    }
+  };
+
+  const fetchAreasForLocation = async (locationId) => {
+    try {
+      setLoadingAreas(true);
+      setDeliveryAreas([]);
+      setSelectedArea(null);
+      const response = await api.get(`/delivery-areas/location/${locationId}/public`);
+      if (response.success && response.data.areas) {
+        setDeliveryAreas(response.data.areas);
+        // Auto-select first area if available
+        if (response.data.areas.length > 0) {
+          setSelectedArea(response.data.areas[0]);
+        }
+      }
+    } catch (e) {
+      console.error('Error fetching delivery areas:', e);
+      setDeliveryAreas([]);
+    } finally {
+      setLoadingAreas(false);
+    }
+  };
+
+  const handleLocationChange = (e) => {
+    const locationId = e.target.value;
+    const location = deliveryLocations.find(loc => loc.id === locationId);
+    setSelectedLocation(location);
+    setSelectedArea(null);
+    
+    // Check if location has areas in the response
+    if (location && location.areas && location.areas.length > 0) {
+      setDeliveryAreas(location.areas);
+      if (location.areas.length > 0) {
+        setSelectedArea(location.areas[0]);
+      }
+    } else if (location) {
+      // Fetch areas for the selected location
+      fetchAreasForLocation(locationId);
+    } else {
+      setDeliveryAreas([]);
     }
   };
 
@@ -147,7 +202,8 @@ const Checkout = () => {
         items: orderItems,
         deliveryAddress: deliveryAddress.trim(),
         notes: notes ? notes.trim() : null,
-        deliveryLocationId: selectedLocation.id
+        deliveryLocationId: selectedLocation.id,
+        deliveryAreaId: selectedArea?.id || null
       };
       
       console.log('Initializing payment with payload:', paymentPayload);
@@ -285,10 +341,7 @@ const Checkout = () => {
             ) : (
               <Select
                 value={selectedLocation?.id || ''}
-                onChange={(e) => {
-                  const location = deliveryLocations.find(loc => loc.id === e.target.value);
-                  setSelectedLocation(location);
-                }}
+                onChange={handleLocationChange}
                 disabled={loading}
               >
                 <option value="">Select a location</option>
@@ -300,6 +353,31 @@ const Checkout = () => {
               </Select>
             )}
           </FormGroup>
+
+          {selectedLocation && deliveryAreas.length > 0 && (
+            <FormGroup>
+              <Label>Area/Sub-location *</Label>
+              {loadingAreas ? (
+                <Input type="text" value="Loading areas..." disabled />
+              ) : (
+                <Select
+                  value={selectedArea?.id || ''}
+                  onChange={(e) => {
+                    const area = deliveryAreas.find(a => a.id === e.target.value);
+                    setSelectedArea(area);
+                  }}
+                  disabled={loading}
+                >
+                  <option value="">Select an area</option>
+                  {deliveryAreas.map((area) => (
+                    <option key={area.id} value={area.id}>
+                      {area.name}
+                    </option>
+                  ))}
+                </Select>
+              )}
+            </FormGroup>
+          )}
 
           <FormGroup>
             <Label>Delivery Address *</Label>

@@ -17,7 +17,8 @@ const createOrder = async (req, res) => {
       customerName,
       customerPhone,
       notes,
-      deliveryLocationId
+      deliveryLocationId,
+      deliveryAreaId
     } = req.body;
 
     const prisma = req.app.get('prisma');
@@ -82,6 +83,7 @@ const createOrder = async (req, res) => {
 
     // Validate delivery location if provided
     let validDeliveryLocationId = null;
+    let validDeliveryAreaId = null;
     if (deliveryLocationId) {
       const deliveryLocation = await prisma.deliveryLocation.findUnique({
         where: { id: deliveryLocationId }
@@ -93,6 +95,27 @@ const createOrder = async (req, res) => {
         });
       }
       validDeliveryLocationId = deliveryLocation.id;
+
+      // Validate delivery area if provided
+      if (deliveryAreaId) {
+        const deliveryArea = await prisma.deliveryArea.findUnique({
+          where: { id: deliveryAreaId }
+        });
+        if (!deliveryArea || !deliveryArea.isActive) {
+          return res.status(400).json({
+            success: false,
+            message: 'Selected delivery area is not available'
+          });
+        }
+        // Verify area belongs to the selected location
+        if (deliveryArea.deliveryLocationId !== deliveryLocationId) {
+          return res.status(400).json({
+            success: false,
+            message: 'Selected area does not belong to the selected location'
+          });
+        }
+        validDeliveryAreaId = deliveryArea.id;
+      }
     }
 
     // Create order (supports both authenticated and guest orders)
@@ -100,6 +123,7 @@ const createOrder = async (req, res) => {
       data: {
         userId: req.user?.id || null, // Guest orders will have null userId
         deliveryLocationId: validDeliveryLocationId,
+        ...(validDeliveryAreaId && { deliveryAreaId: validDeliveryAreaId }),
         totalAmount,
         deliveryAddress,
         customerName,

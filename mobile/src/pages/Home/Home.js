@@ -5,70 +5,8 @@ import io from 'socket.io-client';
 import api, { API_URL } from '../../config/api';
 import { useCart } from '../../context/CartContext';
 import { useToast } from '../../context/ToastContext';
-import { useScrollAnimation } from '../../hooks/useScrollAnimation';
+import AnimatedProductCard from '../../components/AnimatedProductCard/AnimatedProductCard';
 import { FiSearch, FiPlus, FiShoppingCart, FiRefreshCw, FiStar } from 'react-icons/fi';
-
-// Animated Product Card Wrapper Component
-const AnimatedProductCardWrapper = ({ item, index, isDeliveryOpen, navigate, handleAddToCart }) => {
-  const [cardRef, isVisible] = useScrollAnimation({ threshold: 0, rootMargin: '250px 0px 0px 0px' });
-  
-  return (
-    <AnimatedProductCard 
-      ref={cardRef}
-      $visible={isVisible}
-      $delay={index * 0.1}
-      onClick={() => !isDeliveryOpen ? null : navigate(`/menu/${item.id}`)}
-      $disabled={!isDeliveryOpen}
-    >
-      <ImageContainer>
-        <ProductImage 
-          $unavailable={!item.available}
-          src={item.image || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="#f5f5f5"/><text x="50%" y="50%" font-family="Arial" font-size="16" fill="#999" text-anchor="middle" dominant-baseline="middle">No Image</text></svg>'} 
-          alt={item.name}
-          onError={(e) => {
-            e.target.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="#f5f5f5"/><text x="50%" y="50%" font-family="Arial" font-size="16" fill="#999" text-anchor="middle" dominant-baseline="middle">No Image</text></svg>';
-          }}
-        />
-        {!item.available && (
-          <UnavailableBadge>Unavailable</UnavailableBadge>
-        )}
-      </ImageContainer>
-      
-      <ProductInfo>
-        <ProductName>{item.name}</ProductName>
-        <ProductDescription>{item.description}</ProductDescription>
-        
-        <ProductRating>
-          <StarIcon>
-            <FiStar size={14} />
-          </StarIcon>
-          <RatingText>4.5</RatingText>
-          <ReviewCount>(120+)</ReviewCount>
-        </ProductRating>
-
-        <ProductFooter>
-          <PriceContainer>
-            <Price $unavailable={!item.available}>₦{item.price.toFixed(2)}</Price>
-            <PriceSubtext>per serving</PriceSubtext>
-          </PriceContainer>
-          
-          <AddToCartButton 
-            onClick={(e) => handleAddToCart(item, e)}
-            disabled={!item.available || !isDeliveryOpen}
-            $unavailable={!item.available}
-            aria-label={item.available && isDeliveryOpen ? "Add to cart" : "Item unavailable or delivery closed"}
-          >
-            {item.available ? (
-              <FiPlus size={20} />
-            ) : (
-              <span style={{ fontSize: '12px' }}>✕</span>
-            )}
-          </AddToCartButton>
-        </ProductFooter>
-      </ProductInfo>
-    </AnimatedProductCard>
-  );
-};
 
 const Home = () => {
   const [menuItems, setMenuItems] = useState([]);
@@ -311,14 +249,60 @@ const Home = () => {
       ) : (
         <ProductsGrid>
           {filteredItems.map((item, index) => (
-            <AnimatedProductCardWrapper
-              key={item.id}
-              index={index}
-              item={item}
-              isDeliveryOpen={isDeliveryOpen}
-              navigate={navigate}
-              handleAddToCart={handleAddToCart}
-            />
+            <AnimatedProductCard key={item.id} index={index}>
+              <ProductCard 
+                onClick={() => !isDeliveryOpen ? null : navigate(`/menu/${item.id}`)}
+                $disabled={!isDeliveryOpen}
+              >
+                <ImageContainer>
+                  <ProductImage 
+                    $unavailable={!item.available}
+                    src={item.image || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="#f5f5f5"/><text x="50%" y="50%" font-family="Arial" font-size="16" fill="#999" text-anchor="middle" dominant-baseline="middle">No Image</text></svg>'} 
+                    alt={item.name}
+                    loading="eager"
+                    onError={(e) => {
+                      e.target.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="#f5f5f5"/><text x="50%" y="50%" font-family="Arial" font-size="16" fill="#999" text-anchor="middle" dominant-baseline="middle">No Image</text></svg>';
+                    }}
+                  />
+                  {!item.available && (
+                    <UnavailableBadge>Unavailable</UnavailableBadge>
+                  )}
+                </ImageContainer>
+                
+                <ProductInfo>
+                  <ProductName>{item.name}</ProductName>
+                  <ProductDescription>{item.description}</ProductDescription>
+                  
+                  <ProductRating>
+                    <StarIcon>
+                      <FiStar size={14} />
+                    </StarIcon>
+                    <RatingText>4.5</RatingText>
+                    <ReviewCount>(120+)</ReviewCount>
+                  </ProductRating>
+
+                  <ProductFooter>
+                    <PriceContainer>
+                      <Price $unavailable={!item.available}>₦{item.price.toFixed(2)}</Price>
+                      <PriceSubtext>per serving</PriceSubtext>
+                    </PriceContainer>
+                    
+                    <AddToCartButton 
+                      onClick={(e) => handleAddToCart(item, e)}
+                      disabled={!item.available || !isDeliveryOpen}
+                      $unavailable={!item.available}
+                      aria-label={item.available && isDeliveryOpen ? "Add to cart" : "Item unavailable or delivery closed"}
+                    >
+                      {item.available ? (
+                        <FiPlus size={20} />
+                      ) : (
+                        <span style={{ fontSize: '12px' }}>✕</span>
+                      )}
+                    </AddToCartButton>
+                  </ProductFooter>
+                </ProductInfo>
+              </ProductCard>
+            </AnimatedProductCard>
           ))}
         </ProductsGrid>
       )}
@@ -442,6 +426,12 @@ const ProductsGrid = styled.div`
     gap: 1.5rem;
     padding: 0 1rem;
   }
+  
+  /* Ensure images load immediately */
+  img {
+    content-visibility: auto;
+    contain-intrinsic-size: 300px;
+  }
 `;
 
 const ProductCard = styled.div`
@@ -463,34 +453,6 @@ const ProductCard = styled.div`
   }
 `;
 
-const AnimatedProductCard = styled(ProductCard)`
-  opacity: ${props => props.$visible ? 1 : 0};
-  transform: ${props => props.$visible 
-    ? 'translateY(0) scale(1)' 
-    : 'translateY(30px) scale(0.95)'};
-  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-  transition-delay: ${props => props.$delay}s;
-  
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(30px) scale(0.95);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-  }
-  
-  ${props => props.$visible && `
-    animation: fadeInUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) ${props.$delay}s both;
-  `}
-  
-  &:hover {
-    transform: ${props => props.$visible ? 'translateY(-5px) scale(1.02)' : 'translateY(30px) scale(0.95)'};
-    box-shadow: ${props => props.$visible ? '0 8px 24px rgba(102, 126, 234, 0.3)' : '0 2px 8px rgba(0, 0, 0, 0.3)'};
-  }
-`;
 
 const ImageContainer = styled.div`
   position: relative;

@@ -88,7 +88,7 @@ const getMonnifyAccessToken = async (apiKey, secretKey) => {
 // Note: verifyToken middleware makes req.user optional for guests
 const initializePayment = async (req, res) => {
   try {
-    const { amount, customerName, customerEmail, customerPhone, items, deliveryAddress, notes, deliveryLocationId } = req.body;
+    const { amount, customerName, customerEmail, customerPhone, items, deliveryAddress, notes, deliveryLocationId, deliveryAreaId } = req.body;
     const prisma = req.app.get('prisma');
     
     // Allow both authenticated users and guests (req.user may be undefined for guests)
@@ -176,7 +176,8 @@ const initializePayment = async (req, res) => {
               customerPhone,
               notes,
               userId: req.user?.id || null,
-              deliveryLocationId: deliveryLocationId || null
+              deliveryLocationId: deliveryLocationId || null,
+              deliveryAreaId: deliveryAreaId || null
             })
           }
         },
@@ -285,6 +286,7 @@ const createOrderFromPayment = async (prisma, io, orderData, paymentReference, t
 
     // Validate delivery location if provided
     let deliveryLocationId = null;
+    let deliveryAreaId = null;
     if (orderData.deliveryLocationId) {
       const deliveryLocation = await prisma.deliveryLocation.findUnique({
         where: { id: orderData.deliveryLocationId }
@@ -293,6 +295,16 @@ const createOrderFromPayment = async (prisma, io, orderData, paymentReference, t
         throw new Error('Selected delivery location is not available');
       }
       deliveryLocationId = deliveryLocation.id;
+
+      // Validate delivery area if provided
+      if (orderData.deliveryAreaId) {
+        const deliveryArea = await prisma.deliveryArea.findUnique({
+          where: { id: orderData.deliveryAreaId }
+        });
+        if (deliveryArea && deliveryArea.isActive && deliveryArea.deliveryLocationId === deliveryLocationId) {
+          deliveryAreaId = deliveryArea.id;
+        }
+      }
     }
 
     // Calculate total amount and validate items
@@ -332,6 +344,7 @@ const createOrderFromPayment = async (prisma, io, orderData, paymentReference, t
       data: {
         userId: orderData.userId || null,
         deliveryLocationId: deliveryLocationId,
+        ...(deliveryAreaId && { deliveryAreaId: deliveryAreaId }),
         totalAmount: calculatedTotal,
         deliveryAddress: orderData.deliveryAddress,
         customerName: orderData.customerName,
