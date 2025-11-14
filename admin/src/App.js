@@ -10,6 +10,7 @@ import Dashboard from './pages/Dashboard/Dashboard';
 import MenuManagement from './pages/MenuManagement/MenuManagement';
 import Orders from './pages/Orders/Orders';
 import Settings from './pages/Settings/Settings';
+import DeliveryLocations from './pages/DeliveryLocations/DeliveryLocations';
 import Layout from './components/Layout/Layout';
 
 const PrivateRoute = ({ children }) => {
@@ -74,6 +75,16 @@ function AppRoutes() {
             <PrivateRoute>
               <Layout>
                 <Settings />
+              </Layout>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/delivery-locations"
+          element={
+            <PrivateRoute>
+              <Layout>
+                <DeliveryLocations />
               </Layout>
             </PrivateRoute>
           }

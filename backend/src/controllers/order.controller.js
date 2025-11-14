@@ -16,7 +16,8 @@ const createOrder = async (req, res) => {
       deliveryAddress,
       customerName,
       customerPhone,
-      notes
+      notes,
+      deliveryLocationId
     } = req.body;
 
     const prisma = req.app.get('prisma');
@@ -79,10 +80,26 @@ const createOrder = async (req, res) => {
       });
     }
 
+    // Validate delivery location if provided
+    let validDeliveryLocationId = null;
+    if (deliveryLocationId) {
+      const deliveryLocation = await prisma.deliveryLocation.findUnique({
+        where: { id: deliveryLocationId }
+      });
+      if (!deliveryLocation || !deliveryLocation.isActive) {
+        return res.status(400).json({
+          success: false,
+          message: 'Selected delivery location is not available'
+        });
+      }
+      validDeliveryLocationId = deliveryLocation.id;
+    }
+
     // Create order (supports both authenticated and guest orders)
     const order = await prisma.order.create({
       data: {
         userId: req.user?.id || null, // Guest orders will have null userId
+        deliveryLocationId: validDeliveryLocationId,
         totalAmount,
         deliveryAddress,
         customerName,

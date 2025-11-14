@@ -11,6 +11,18 @@ const getSettings = async (req, res) => {
       });
     }
 
+    // Test database connection first
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+    } catch (dbError) {
+      console.error('❌ Database connection test failed:', dbError.message);
+      return res.status(500).json({
+        success: false,
+        message: 'Database connection failed. Please check your database connection and restart the server.',
+        error: dbError.message
+      });
+    }
+
     let settings = await prisma.settings.findFirst();
 
     // Create default settings if none exist

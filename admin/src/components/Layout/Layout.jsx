@@ -8,7 +8,8 @@ import {
   FiPackage, 
   FiSettings, 
   FiLogOut, 
-  FiUser 
+  FiUser,
+  FiMapPin
 } from 'react-icons/fi';
 import {
   LayoutContainer,
@@ -37,6 +38,7 @@ const Layout = ({ children }) => {
     { path: '/', icon: FiBarChart2, label: 'Dashboard' },
     { path: '/menu', icon: FiMenu, label: 'Menu Management' },
     { path: '/orders', icon: FiPackage, label: 'Orders' },
+    { path: '/delivery-locations', icon: FiMapPin, label: 'Delivery Locations' },
     { path: '/settings', icon: FiSettings, label: 'Settings' }
   ];
 
@@ -95,6 +97,7 @@ const Layout = ({ children }) => {
             {location.pathname === '/menu' ? 'Menu Management' :
              location.pathname === '/orders' ? 'Orders' :
              location.pathname === '/settings' ? 'Settings' :
+             location.pathname === '/delivery-locations' ? 'Delivery Locations' :
              location.pathname === '/' ? 'Dashboard' :
              'Nigerian Food Admin Dashboard'}
           </HeaderTitle>

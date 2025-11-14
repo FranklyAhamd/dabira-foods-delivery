@@ -23,23 +23,27 @@ const MainLayout = () => {
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
+  const isCartPage = location.pathname === '/cart';
+
   return (
     <Container>
-      {/* Header */}
-      <Header>
-        <Logo>Dabira Foods</Logo>
-        <HeaderRight>
-          <CartLink to="/cart">
-            <FiShoppingCart size={24} />
-            {getTotalPlates() > 0 && (
-              <CartBadge>{getTotalPlates()}</CartBadge>
-            )}
-          </CartLink>
-          <MenuButton onClick={() => setMenuOpen(!menuOpen)}>
-            <FiMenu size={24} />
-          </MenuButton>
-        </HeaderRight>
-      </Header>
+      {/* Header - Hidden on Cart page */}
+      {!isCartPage && (
+        <Header>
+          <Logo>Dabira Foods</Logo>
+          <HeaderRight>
+            <CartLink to="/cart">
+              <FiShoppingCart size={24} />
+              {getTotalPlates() > 0 && (
+                <CartBadge>{getTotalPlates()}</CartBadge>
+              )}
+            </CartLink>
+            <MenuButton onClick={() => setMenuOpen(!menuOpen)}>
+              <FiMenu size={24} />
+            </MenuButton>
+          </HeaderRight>
+        </Header>
+      )}
 
       {/* Mobile Menu */}
       {menuOpen && (

@@ -11,6 +11,7 @@ const menuRoutes = require('./routes/menu.routes');
 const orderRoutes = require('./routes/order.routes');
 const paymentRoutes = require('./routes/payment.routes');
 const settingsRoutes = require('./routes/settings.routes');
+const deliveryLocationRoutes = require('./routes/deliveryLocation.routes');
 
 // Initialize Express app
 const app = express();
@@ -88,10 +89,26 @@ app.use('/api/menu', menuRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/delivery-locations', deliveryLocationRoutes);
 
 // Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'Dabira Foods API is running' });
+app.get('/api/health', async (req, res) => {
+  try {
+    // Test database connection
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ 
+      status: 'OK', 
+      message: 'Dabira Foods API is running',
+      database: 'connected'
+    });
+  } catch (error) {
+    res.status(503).json({ 
+      status: 'ERROR', 
+      message: 'API is running but database connection failed',
+      database: 'disconnected',
+      error: error.message
+    });
+  }
 });
 
 // Socket.io connection handling

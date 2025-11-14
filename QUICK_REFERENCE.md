@@ -63,8 +63,8 @@ curl -X POST http://localhost:5000/api/auth/register \
 ```env
 DATABASE_URL="postgresql://user:pass@host/db?sslmode=require"
 JWT_SECRET="your-secret-key"
-PAYSTACK_SECRET_KEY="sk_test_..."
-PAYSTACK_PUBLIC_KEY="pk_test_..."
+# Monnify credentials are configured in Admin Settings
+# No environment variables needed for Monnify
 PORT=5000
 ```
 
@@ -77,13 +77,14 @@ const API_URL = 'http://localhost:5000/api';
 const API_URL = 'http://YOUR_IP:5000/api';
 ```
 
-## 🧪 Paystack Test Cards
+## 🧪 Monnify Test Cards
 
-**Card Number**: 4084 0840 8408 4081
-**CVV**: Any 3 digits
-**Expiry**: Any future date
-**PIN**: 0000
-**OTP**: 123456
+Monnify test credentials should be configured in Admin Settings:
+- Monnify API Key (starts with `MK_TEST_` for test mode)
+- Monnify Secret Key
+- Monnify Contract Code
+
+For test payments, use any valid Nigerian bank account or card details in the Monnify checkout page.
 
 ## 📱 Mobile App Commands
 

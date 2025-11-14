@@ -17,7 +17,7 @@ dabira-foods-delivery/
 - **Backend**: Node.js, Express, Prisma, Neon PostgreSQL, Socket.io, JWT
 - **Mobile**: React Native, Styled Components, React Navigation
 - **Admin**: React, Styled Components, React Router
-- **Payment**: Paystack integration
+- **Payment**: Monnify integration
 
 ## 🚀 Super Quick Start (3 Steps!)
 
@@ -60,7 +60,7 @@ npm run admin
 ### Customer Mobile App
 - Browse restaurant menu
 - Add items to cart
-- Pay online via Paystack
+- Pay online via Monnify
 - Track order status in real-time
 - View order history
 - Manage profile
@@ -75,7 +75,7 @@ npm run admin
 ### Backend API
 - JWT authentication
 - RESTful APIs for menu and orders
-- Paystack payment verification
+- Monnify payment verification
 - Real-time updates via Socket.io
 - Secure data storage with PostgreSQL
 

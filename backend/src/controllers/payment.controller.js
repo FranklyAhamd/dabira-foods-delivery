@@ -7,24 +7,88 @@ const getMonnifyCredentials = async (prisma) => {
   if (!settings || !settings.monnifyApiKey || !settings.monnifySecretKey || !settings.monnifyContractCode) {
     throw new Error('Monnify credentials not configured. Please configure Monnify in settings.');
   }
+  
+  // Trim whitespace from credentials
+  const apiKey = settings.monnifyApiKey.trim();
+  const secretKey = settings.monnifySecretKey.trim();
+  const contractCode = settings.monnifyContractCode.trim();
+  
   return {
-    apiKey: settings.monnifyApiKey,
-    secretKey: settings.monnifySecretKey,
-    contractCode: settings.monnifyContractCode
+    apiKey,
+    secretKey,
+    contractCode
   };
 };
 
-// Generate Monnify authorization header
-const generateMonnifyAuth = (apiKey, secretKey) => {
-  const credentials = `${apiKey}:${secretKey}`;
-  return `Basic ${Buffer.from(credentials).toString('base64')}`;
+// Get Monnify base URL based on API key (test vs production)
+const getMonnifyBaseUrl = (apiKey) => {
+  // Test credentials start with MK_TEST_, use sandbox
+  // Production credentials start with MK_PROD_, use production API
+  if (apiKey && apiKey.trim().startsWith('MK_TEST_')) {
+    return 'https://sandbox.monnify.com';
+  }
+  return 'https://api.monnify.com';
+};
+
+// Get Monnify access token (OAuth 2.0)
+const getMonnifyAccessToken = async (apiKey, secretKey) => {
+  try {
+    // Ensure no extra whitespace
+    const cleanApiKey = apiKey.trim();
+    const cleanSecretKey = secretKey.trim();
+    
+    // Determine base URL based on API key
+    const baseUrl = getMonnifyBaseUrl(cleanApiKey);
+    const authUrl = `${baseUrl}/api/v1/auth/login`;
+    
+    console.log('🔐 Authenticating with Monnify:', {
+      environment: cleanApiKey.startsWith('MK_TEST_') ? 'SANDBOX (Test)' : 'PRODUCTION',
+      baseUrl: baseUrl
+    });
+    
+    // Get access token from Monnify
+    const response = await axios.post(
+      authUrl,
+      {},
+      {
+        headers: {
+          Authorization: `Basic ${Buffer.from(`${cleanApiKey}:${cleanSecretKey}`).toString('base64')}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    if (response.data.requestSuccessful && response.data.responseBody) {
+      const accessToken = response.data.responseBody.accessToken;
+      if (!accessToken) {
+        throw new Error('Access token not received from Monnify');
+      }
+      console.log('✅ Monnify access token obtained successfully');
+      return accessToken;
+    } else {
+      const errorMsg = response.data.responseMessage || 'Failed to get access token';
+      console.error('❌ Monnify auth failed:', {
+        responseCode: response.data.responseCode,
+        responseMessage: errorMsg,
+        fullResponse: response.data
+      });
+      throw new Error(errorMsg);
+    }
+  } catch (error) {
+    console.error('❌ Get Monnify access token error:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status
+    });
+    throw new Error(error.response?.data?.responseMessage || error.message || 'Failed to authenticate with Monnify');
+  }
 };
 
 // Initialize Monnify payment
 // Note: verifyToken middleware makes req.user optional for guests
 const initializePayment = async (req, res) => {
   try {
-    const { amount, customerName, customerEmail, customerPhone, items, deliveryAddress, notes } = req.body;
+    const { amount, customerName, customerEmail, customerPhone, items, deliveryAddress, notes, deliveryLocationId } = req.body;
     const prisma = req.app.get('prisma');
     
     // Allow both authenticated users and guests (req.user may be undefined for guests)
@@ -37,7 +101,16 @@ const initializePayment = async (req, res) => {
     }
 
     // Get Monnify credentials
-    const credentials = await getMonnifyCredentials(prisma);
+    let credentials;
+    try {
+      credentials = await getMonnifyCredentials(prisma);
+    } catch (error) {
+      console.error('Monnify credentials error:', error.message);
+      return res.status(400).json({
+        success: false,
+        message: error.message || 'Monnify credentials not configured. Please configure Monnify in admin settings.'
+      });
+    }
 
     // Generate unique transaction reference
     const transactionReference = `TXN_${Date.now()}_${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
@@ -47,39 +120,100 @@ const initializePayment = async (req, res) => {
       ? `Payment for ${items.length} item(s)`
       : 'Payment for order';
 
+    // Build redirect URL - ensure it's a valid URL
+    const appBaseUrl = process.env.MOBILE_APP_URL || process.env.ADMIN_APP_URL || 'http://localhost:3001';
+    const redirectUrl = `${appBaseUrl.replace(/\/$/, '')}/payment/callback`;
+    
+    // Get Monnify access token
+    console.log('🔐 Getting Monnify access token...');
+    let accessToken;
+    try {
+      accessToken = await getMonnifyAccessToken(credentials.apiKey, credentials.secretKey);
+    } catch (error) {
+      console.error('❌ Failed to get Monnify access token:', error.message);
+      // Use 502 Bad Gateway for Monnify API failures (not 401, which is for user auth)
+      return res.status(502).json({
+        success: false,
+        message: error.message || 'Failed to authenticate with Monnify. Please check your credentials in Admin Settings.'
+      });
+    }
+    
+    console.log('💳 Initializing Monnify payment:', {
+      amount,
+      customerName,
+      customerEmail,
+      contractCode: credentials.contractCode,
+      redirectUrl,
+      hasAccessToken: !!accessToken
+    });
+
+    // Determine Monnify base URL
+    const monnifyBaseUrl = getMonnifyBaseUrl(credentials.apiKey);
+    const initTransactionUrl = `${monnifyBaseUrl}/api/v1/merchant/transactions/init-transaction`;
+    
+    console.log('💳 Using Monnify base URL:', monnifyBaseUrl);
+    
     // Initialize Monnify transaction
-    const response = await axios.post(
-      'https://api.monnify.com/api/v1/merchant/transactions/init-transaction',
-      {
-        amount: amount,
-        customerName: customerName || 'Customer',
-        customerEmail: customerEmail,
-        customerPhoneNumber: customerPhone,
-        paymentDescription: paymentDescription,
-        currencyCode: 'NGN',
-        contractCode: credentials.contractCode,
-        redirectUrl: `${process.env.MOBILE_APP_URL || process.env.ADMIN_APP_URL || 'http://localhost:3000'}/payment/callback`,
-        paymentReference: transactionReference,
-        metadata: {
-          orderData: JSON.stringify({
-            items,
-            deliveryAddress,
-            customerName,
-            customerPhone,
-            notes,
-            userId: req.user?.id || null
-          })
+    let response;
+    try {
+      response = await axios.post(
+        initTransactionUrl,
+        {
+          amount: amount,
+          customerName: customerName || 'Customer',
+          customerEmail: customerEmail,
+          customerPhoneNumber: customerPhone,
+          paymentDescription: paymentDescription,
+          currencyCode: 'NGN',
+          contractCode: credentials.contractCode,
+          redirectUrl: redirectUrl,
+          paymentReference: transactionReference,
+          metadata: {
+            orderData: JSON.stringify({
+              items,
+              deliveryAddress,
+              customerName,
+              customerPhone,
+              notes,
+              userId: req.user?.id || null,
+              deliveryLocationId: deliveryLocationId || null
+            })
+          }
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          }
         }
-      },
-      {
-        headers: {
-          Authorization: generateMonnifyAuth(credentials.apiKey, credentials.secretKey),
-          'Content-Type': 'application/json'
-        }
-      }
-    );
+      );
+    } catch (monnifyError) {
+      // Handle Monnify API errors specifically
+      console.error('❌ Monnify API error:', {
+        message: monnifyError.message,
+        response: monnifyError.response?.data,
+        status: monnifyError.response?.status
+      });
+      
+      const errorMessage = monnifyError.response?.data?.responseMessage 
+        || monnifyError.message 
+        || 'Failed to initialize payment with Monnify';
+      
+      // Return 502 Bad Gateway for Monnify API failures
+      return res.status(502).json({
+        success: false,
+        message: errorMessage,
+        ...(process.env.NODE_ENV === 'development' && {
+          details: monnifyError.response?.data
+        })
+      });
+    }
 
     if (response.data.requestSuccessful && response.data.responseBody) {
+      console.log('✅ Payment initialized successfully:', {
+        transactionReference: response.data.responseBody.transactionReference,
+        checkoutUrl: response.data.responseBody.checkoutUrl ? 'URL received' : 'No URL'
+      });
       res.json({
         success: true,
         message: 'Payment initialized',
@@ -90,16 +224,52 @@ const initializePayment = async (req, res) => {
         }
       });
     } else {
+      console.error('❌ Monnify payment initialization failed:', {
+        responseCode: response.data.responseCode,
+        responseMessage: response.data.responseMessage,
+        fullResponse: response.data
+      });
       res.status(400).json({
         success: false,
         message: response.data.responseMessage || 'Failed to initialize payment'
       });
     }
   } catch (error) {
-    console.error('Initialize payment error:', error.response?.data || error.message);
-    res.status(500).json({
+    console.error('Initialize payment error:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+      stack: error.stack
+    });
+    
+    // Provide more detailed error message
+    let errorMessage = 'Error initializing payment';
+    let errorDetails = null;
+    
+    if (error.response?.data) {
+      // Monnify API error response
+      if (error.response.data.responseMessage) {
+        errorMessage = error.response.data.responseMessage;
+      }
+      errorDetails = error.response.data;
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    
+    // Return error with details in development
+    // Use 502 for external API errors, 500 for internal errors
+    const statusCode = error.response?.status >= 400 && error.response?.status < 500 
+      ? error.response.status 
+      : 500;
+    
+    res.status(statusCode).json({
       success: false,
-      message: error.response?.data?.responseMessage || 'Error initializing payment'
+      message: errorMessage,
+      ...(process.env.NODE_ENV === 'development' && {
+        details: errorDetails,
+        error: error.message,
+        stack: error.stack
+      })
     });
   }
 };
@@ -111,6 +281,18 @@ const createOrderFromPayment = async (prisma, io, orderData, paymentReference, t
     const settings = await prisma.settings.findFirst();
     if (settings && settings.isDeliveryOpen === false) {
       throw new Error('Delivery is currently closed');
+    }
+
+    // Validate delivery location if provided
+    let deliveryLocationId = null;
+    if (orderData.deliveryLocationId) {
+      const deliveryLocation = await prisma.deliveryLocation.findUnique({
+        where: { id: orderData.deliveryLocationId }
+      });
+      if (!deliveryLocation || !deliveryLocation.isActive) {
+        throw new Error('Selected delivery location is not available');
+      }
+      deliveryLocationId = deliveryLocation.id;
     }
 
     // Calculate total amount and validate items
@@ -140,7 +322,7 @@ const createOrderFromPayment = async (prisma, io, orderData, paymentReference, t
       });
     }
 
-    // Verify total amount matches
+    // Verify total amount matches (allow small rounding differences)
     if (Math.abs(calculatedTotal - totalAmount) > 0.01) {
       throw new Error('Amount mismatch');
     }
@@ -149,6 +331,7 @@ const createOrderFromPayment = async (prisma, io, orderData, paymentReference, t
     const order = await prisma.order.create({
       data: {
         userId: orderData.userId || null,
+        deliveryLocationId: deliveryLocationId,
         totalAmount: calculatedTotal,
         deliveryAddress: orderData.deliveryAddress,
         customerName: orderData.customerName,
@@ -206,13 +389,20 @@ const verifyPayment = async (req, res) => {
 
     // Get Monnify credentials
     const credentials = await getMonnifyCredentials(prisma);
+    
+    // Get Monnify access token
+    const accessToken = await getMonnifyAccessToken(credentials.apiKey, credentials.secretKey);
+    
+    // Determine Monnify base URL
+    const monnifyBaseUrl = getMonnifyBaseUrl(credentials.apiKey);
+    const verifyUrl = `${monnifyBaseUrl}/api/v2/transactions/${encodeURIComponent(reference)}`;
 
     // Verify payment with Monnify
     const response = await axios.get(
-      `https://api.monnify.com/api/v2/transactions/${encodeURIComponent(reference)}`,
+      verifyUrl,
       {
         headers: {
-          Authorization: generateMonnifyAuth(credentials.apiKey, credentials.secretKey)
+          Authorization: `Bearer ${accessToken}`
         }
       }
     );
@@ -334,7 +524,7 @@ const handleWebhook = async (req, res) => {
     // Verify webhook signature
     const credentials = await getMonnifyCredentials(prisma);
     const computedHash = crypto
-      .createHmac('sha512', credentials.secretKey)
+      .createHmac('sha512', credentials.secretKey.trim())
       .update(JSON.stringify(event))
       .digest('hex');
     

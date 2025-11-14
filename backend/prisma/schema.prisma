@@ -50,19 +50,21 @@ model MenuItem {
 }
 
 model Order {
-  id                String      @id @default(uuid())
+  id                String           @id @default(uuid())
   userId            String?
-  user              User?       @relation(fields: [userId], references: [id])
-  status            OrderStatus @default(PENDING)
+  user              User?            @relation(fields: [userId], references: [id])
+  deliveryLocationId String?
+  deliveryLocation  DeliveryLocation? @relation(fields: [deliveryLocationId], references: [id])
+  status            OrderStatus      @default(PENDING)
   totalAmount       Float
-  paymentStatus     PaymentStatus @default(PENDING)
+  paymentStatus     PaymentStatus    @default(PENDING)
   paymentReference  String?
   deliveryAddress   String
   customerName      String
   customerPhone     String
   notes             String?
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
   items             OrderItem[]
 }
 
@@ -109,5 +111,15 @@ model Settings {
   isDeliveryOpen      Boolean  @default(true)
   closedMessage       String?  @default("Delivery is closed for today. Please check back during operating hours.")
   updatedAt           DateTime @updatedAt
+}
+
+model DeliveryLocation {
+  id          String   @id @default(uuid())
+  name        String
+  price       Float
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  orders      Order[]
 }
 

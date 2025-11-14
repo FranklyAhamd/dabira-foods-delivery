@@ -14,8 +14,10 @@ import {
   FiMinus, 
   FiPlus, 
   FiArrowRight,
-  FiEdit
+  FiEdit,
+  FiMenu
 } from 'react-icons/fi';
+import { Link } from 'react-router-dom';
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -36,6 +38,14 @@ const Cart = () => {
   const [isDeliveryOpen, setIsDeliveryOpen] = useState(true);
   const [closedMessage, setClosedMessage] = useState('');
   const [expandedPlate, setExpandedPlate] = useState(null);
+
+  // Format number with commas (only for integer part, not decimals)
+  const formatNumber = (num) => {
+    const numStr = num.toString();
+    const parts = numStr.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return parts.join('.');
+  };
   const [showUnavailableAlert, setShowUnavailableAlert] = useState(false);
 
   useEffect(() => {
@@ -180,8 +190,21 @@ const Cart = () => {
         onRemoveItems={handleRemoveUnavailableItems}
       />
       <Header>
-        <Title>My Cart</Title>
-        <ClearButton onClick={clearCart}>Clear All</ClearButton>
+        <HeaderLeft>
+          <Title>My Cart</Title>
+          <ClearButton onClick={clearCart}>Clear All</ClearButton>
+        </HeaderLeft>
+        <HeaderRight>
+          <CartIconLink to="/cart">
+            <FiShoppingCart size={20} />
+            {cartItems.length > 0 && (
+              <CartBadge>{cartItems.length}</CartBadge>
+            )}
+          </CartIconLink>
+          <MenuIconButton onClick={() => {/* Menu handler will be in MainLayout */}}>
+            <FiMenu size={20} />
+          </MenuIconButton>
+        </HeaderRight>
       </Header>
       
       <ItemsList>
@@ -286,43 +309,45 @@ const Cart = () => {
         <Summary>
           <SummaryRow>
             <SummaryLabel>Subtotal:</SummaryLabel>
-            <SummaryValue>₦{getTotalPrice().toFixed(2)}</SummaryValue>
+            <SummaryValue>₦{formatNumber(getTotalPrice().toFixed(2))}</SummaryValue>
           </SummaryRow>
           <SummaryRow>
             <SummaryLabel>Delivery:</SummaryLabel>
-            <SummaryValue>₦500.00</SummaryValue>
+            <SummaryValue>₦{formatNumber('500.00')}</SummaryValue>
           </SummaryRow>
           <Divider />
           <TotalRow>
             <TotalLabel>Total:</TotalLabel>
-            <TotalValue>₦{(getTotalPrice() + 500).toFixed(2)}</TotalValue>
+            <TotalValue>₦{formatNumber((getTotalPrice() + 500).toFixed(2))}</TotalValue>
           </TotalRow>
         </Summary>
         
         <CheckoutButtons>
-          <ExpressCheckoutButton onClick={handleExpressCheckout} disabled={!isDeliveryOpen}>
-            {!isDeliveryOpen ? (
-              'Delivery Closed'
-            ) : (
-              <>
-                Express Checkout
-                <FiArrowRight size={18} />
-              </>
-            )}
-          </ExpressCheckoutButton>
+          {!isAuthenticated && (
+            <ExpressCheckoutButton onClick={handleExpressCheckout} disabled={!isDeliveryOpen}>
+              {!isDeliveryOpen ? (
+                'Delivery Closed'
+              ) : (
+                <>
+                  Express Checkout
+                  <FiArrowRight size={14} />
+                </>
+              )}
+            </ExpressCheckoutButton>
+          )}
           
           <LoginCheckoutButton onClick={handleLoginCheckout} disabled={!isDeliveryOpen}>
             {!isDeliveryOpen ? (
               'Delivery Closed'
             ) : isAuthenticated ? (
               <>
-                Checkout with Account
-                <FiArrowRight size={18} />
+                Checkout
+                <FiArrowRight size={14} />
               </>
             ) : (
               <>
                 Login & Checkout
-                <FiArrowRight size={18} />
+                <FiArrowRight size={14} />
               </>
             )}
           </LoginCheckoutButton>
@@ -343,12 +368,13 @@ const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.875rem 1rem;
+  padding: 0.625rem 0.875rem;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.25);
+  box-shadow: 0 2px 12px rgba(102, 126, 234, 0.25);
   position: relative;
   overflow: hidden;
+  min-height: 48px;
   
   &::before {
     content: '';
@@ -363,27 +389,42 @@ const Header = styled.div`
   }
 `;
 
-const Title = styled.h2`
-  font-size: 1.25rem;
-  font-weight: 800;
-  color: white;
-  letter-spacing: -0.5px;
+const HeaderLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  flex: 1;
   position: relative;
   z-index: 1;
 `;
 
+const HeaderRight = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  position: relative;
+  z-index: 1;
+`;
+
+const Title = styled.h2`
+  font-size: 1rem;
+  font-weight: 800;
+  color: white;
+  letter-spacing: -0.3px;
+  margin: 0;
+`;
+
 const ClearButton = styled.button`
   color: white;
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 600;
   background: rgba(255, 255, 255, 0.25);
-  padding: 0.4rem 0.75rem;
-  border-radius: 8px;
+  padding: 0.3rem 0.625rem;
+  border-radius: 6px;
   backdrop-filter: blur(10px);
   border: none;
   transition: all 0.2s;
-  position: relative;
-  z-index: 1;
+  white-space: nowrap;
   
   &:active {
     background: rgba(255, 255, 255, 0.35);
@@ -391,28 +432,69 @@ const ClearButton = styled.button`
   }
 `;
 
+const CartIconLink = styled(Link)`
+  position: relative;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const CartBadge = styled.span`
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+  color: white;
+  border: 2px solid white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.5625rem;
+  font-weight: bold;
+  box-shadow: 0 2px 6px rgba(255, 107, 107, 0.4);
+`;
+
+const MenuIconButton = styled.button`
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  &:active {
+    opacity: 0.7;
+  }
+`;
+
 const ItemsList = styled.div`
   flex: 1;
-  padding: 0.75rem;
+  padding: 0.625rem;
   overflow-y: auto;
-  padding-bottom: 1rem;
+  padding-bottom: 0.75rem;
 `;
 
 const PlateWrapper = styled.div`
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
 `;
 
 const CompactPlateCard = styled.div`
   background: white;
-  border-radius: 12px;
-  padding: 0.75rem;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  padding: 0.625rem;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.625rem;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: ${props => props.$expanded ? '2px solid #667eea' : '2px solid transparent'};
+  transition: all 0.2s;
+  border: ${props => props.$expanded ? '1.5px solid #667eea' : '1px solid transparent'};
   position: relative;
   overflow: hidden;
   
@@ -426,41 +508,41 @@ const CompactPlateCard = styled.div`
     background: ${props => props.$expanded 
       ? 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)' 
       : 'transparent'};
-    transition: all 0.3s;
+    transition: all 0.2s;
   }
   
   &:active {
     transform: scale(0.98);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
   }
 `;
 
 const PlateSVGContainer = styled.div`
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   position: relative;
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-radius: 10px;
-  padding: 0.375rem;
+  border-radius: 8px;
+  padding: 0.25rem;
 `;
 
 const PlateNumberBadge = styled.div`
   position: absolute;
-  top: -3px;
-  right: -3px;
+  top: -4px;
+  right: -4px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  font-size: 0.5625rem;
+  font-size: 0.5rem;
   font-weight: 800;
-  padding: 0.2rem 0.3rem;
-  border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(102, 126, 234, 0.4);
+  padding: 0.15rem 0.25rem;
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(102, 126, 234, 0.4);
   z-index: 2;
-  min-width: 20px;
+  min-width: 16px;
   text-align: center;
   line-height: 1;
 `;
@@ -468,43 +550,46 @@ const PlateNumberBadge = styled.div`
 const PlateSVG = styled.svg`
   width: 100%;
   height: 100%;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
 `;
 
 const PlateInfo = styled.div`
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.125rem;
+  min-width: 0;
 `;
 
 const PlateTotalCompact = styled.div`
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   font-weight: 700;
   font-family: 'Space Grotesk', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
 `;
 
 const PlateItemsCount = styled.div`
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   color: #6c757d;
   font-weight: 500;
+  line-height: 1.2;
 `;
 
 const PlateActions = styled.div`
   display: flex;
-  gap: 0.5rem;
+  gap: 0.375rem;
   flex-shrink: 0;
 `;
 
 const EditButton = styled.button`
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
   background: ${props => props.disabled 
     ? 'linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%)' 
     : 'linear-gradient(135deg, #f0f4ff 0%, #e8edff 100%)'};
@@ -513,14 +598,14 @@ const EditButton = styled.button`
   align-items: center;
   justify-content: center;
   border: none;
-  box-shadow: ${props => props.disabled ? 'none' : '0 2px 6px rgba(102, 126, 234, 0.15)'};
+  box-shadow: ${props => props.disabled ? 'none' : '0 1px 4px rgba(102, 126, 234, 0.15)'};
   transition: all 0.2s;
   cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
   
   &:active:not(:disabled) {
     background: linear-gradient(135deg, #e0e8ff 0%, #d8e0ff 100%);
     transform: scale(0.92);
-    box-shadow: 0 1px 3px rgba(102, 126, 234, 0.2);
+    box-shadow: 0 1px 2px rgba(102, 126, 234, 0.2);
   }
   
   &:disabled {
@@ -528,48 +613,48 @@ const EditButton = styled.button`
   }
   
   svg {
-    width: 14px;
-    height: 14px;
+    width: 12px;
+    height: 12px;
   }
 `;
 
 const DeleteButton = styled.button`
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
   background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%);
   color: #ef4444;
   display: flex;
   align-items: center;
   justify-content: center;
   border: none;
-  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.15);
+  box-shadow: 0 1px 4px rgba(239, 68, 68, 0.15);
   transition: all 0.2s;
   
   &:active {
     background: linear-gradient(135deg, #ffe0e0 0%, #ffd8d8 100%);
     transform: scale(0.92);
-    box-shadow: 0 1px 3px rgba(239, 68, 68, 0.2);
+    box-shadow: 0 1px 2px rgba(239, 68, 68, 0.2);
   }
   
   svg {
-    width: 14px;
-    height: 14px;
+    width: 12px;
+    height: 12px;
   }
 `;
 
 const ExpandedContent = styled.div`
-  margin-top: 0.5rem;
-  padding: 0.5rem;
+  margin-top: 0.375rem;
+  padding: 0.375rem;
   background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-  border-radius: 10px;
+  border-radius: 8px;
   border: 1px solid rgba(102, 126, 234, 0.1);
-  animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: slideDown 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   
   @keyframes slideDown {
     from {
       opacity: 0;
-      transform: translateY(-15px);
+      transform: translateY(-10px);
     }
     to {
       opacity: 1;
@@ -580,12 +665,12 @@ const ExpandedContent = styled.div`
 
 const CompactCartItem = styled.div`
   display: flex;
-  gap: 0.5rem;
+  gap: 0.375rem;
   background: white;
-  padding: 0.5rem;
-  border-radius: 8px;
-  margin-bottom: 0.5rem;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
+  padding: 0.375rem;
+  border-radius: 6px;
+  margin-bottom: 0.375rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
   transition: all 0.2s;
   
   &:last-child {
@@ -594,79 +679,85 @@ const CompactCartItem = styled.div`
   
   &:active {
     transform: scale(0.98);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   }
 `;
 
 const ItemImageCompact = styled.img`
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: 6px;
   flex-shrink: 0;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 `;
 
 const ItemDetailsCompact = styled.div`
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.125rem;
+  min-width: 0;
 `;
 
 const ItemNameCompact = styled.div`
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: #212529;
-  line-height: 1.3;
-  letter-spacing: -0.2px;
+  line-height: 1.2;
+  letter-spacing: -0.1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 
 const ItemPriceCompact = styled.div`
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   color: #6c757d;
   font-weight: 500;
   font-family: 'Space Grotesk', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   letter-spacing: 0.01em;
+  line-height: 1.2;
 `;
 
 const QuantityControlsCompact = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.25rem;
+  gap: 0.375rem;
+  margin-top: 0.125rem;
 `;
 
 const QuantityButtonCompact = styled.button`
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   border: none;
-  box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 1px 4px rgba(102, 126, 234, 0.3);
   transition: all 0.2s;
   
   &:active {
     transform: scale(0.9);
-    box-shadow: 0 1px 3px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 1px 2px rgba(102, 126, 234, 0.4);
   }
   
   svg {
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
   }
 `;
 
 const QuantityValueCompact = styled.span`
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: #212529;
-  min-width: 20px;
+  min-width: 18px;
   text-align: center;
+  line-height: 1.2;
 `;
 
 const ItemActionsCompact = styled.div`
@@ -675,29 +766,31 @@ const ItemActionsCompact = styled.div`
   align-items: flex-end;
   justify-content: space-between;
   gap: 0.25rem;
+  flex-shrink: 0;
 `;
 
 const ItemTotalCompact = styled.div`
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 700;
   font-family: 'Space Grotesk', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
 `;
 
 const RemoveButtonCompact = styled.button`
   background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%);
   border: none;
   color: #ef4444;
-  padding: 0.3rem;
-  border-radius: 5px;
+  padding: 0.25rem;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 1px 4px rgba(239, 68, 68, 0.15);
+  box-shadow: 0 1px 3px rgba(239, 68, 68, 0.15);
   transition: all 0.2s;
   
   &:active {
@@ -706,14 +799,14 @@ const RemoveButtonCompact = styled.button`
   }
   
   svg {
-    width: 12px;
-    height: 12px;
+    width: 10px;
+    height: 10px;
   }
 `;
 
 const Footer = styled.div`
   background: white;
-  padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom));
+  padding: 0.75rem 0.875rem calc(0.25rem + 20px + env(safe-area-inset-bottom));
   border-top: 1px solid rgba(0, 0, 0, 0.06);
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
   position: relative;
@@ -730,17 +823,17 @@ const Footer = styled.div`
 `;
 
 const Summary = styled.div`
-  margin-bottom: 0.875rem;
-  padding: 0.75rem;
+  margin-bottom: 0.625rem;
+  padding: 0.625rem;
   background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-  border-radius: 10px;
+  border-radius: 8px;
   border: 1px solid rgba(102, 126, 234, 0.1);
 `;
 
 const SummaryRow = styled.div`
   display: flex;
   justify-content: space-between;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.375rem;
   align-items: center;
   
   &:last-of-type {
@@ -749,13 +842,13 @@ const SummaryRow = styled.div`
 `;
 
 const SummaryLabel = styled.span`
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   color: #6c757d;
   font-weight: 500;
 `;
 
 const SummaryValue = styled.span`
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   color: #212529;
   font-weight: 600;
   font-family: 'Space Grotesk', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
@@ -765,80 +858,81 @@ const SummaryValue = styled.span`
 const Divider = styled.div`
   height: 1px;
   background: linear-gradient(90deg, transparent 0%, rgba(102, 126, 234, 0.2) 50%, transparent 100%);
-  margin: 0.625rem 0;
+  margin: 0.5rem 0;
 `;
 
 const TotalRow = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 0.375rem;
+  padding-top: 0.25rem;
 `;
 
 const TotalLabel = styled.span`
-  font-size: 1rem;
+  font-size: 0.875rem;
   font-weight: 800;
   color: #212529;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.2px;
 `;
 
 const TotalValue = styled.span`
-  font-size: 1.25rem;
+  font-size: 1rem;
   font-weight: 700;
   font-family: 'Space Grotesk', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
 `;
 
 const ClosedWarning = styled.div`
   background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
   border: 1px solid #ffc107;
-  border-radius: 10px;
-  padding: 0.75rem;
-  margin-bottom: 0.875rem;
+  border-radius: 8px;
+  padding: 0.5rem;
+  margin-bottom: 0.625rem;
   box-shadow: 0 2px 8px rgba(255, 193, 7, 0.2);
 `;
 
 const ClosedWarningText = styled.p`
   color: #856404;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   text-align: center;
   margin: 0;
   font-weight: 600;
-  line-height: 1.4;
+  line-height: 1.3;
 `;
 
 const CheckoutButtons = styled.div`
   display: flex;
-  flex-direction: column;
-  gap: 0.625rem;
+  flex-direction: row;
+  gap: 0.5rem;
 `;
 
 const ExpressCheckoutButton = styled.button`
-  width: 100%;
+  flex: 1;
   background: ${props => props.disabled 
     ? 'linear-gradient(135deg, #ccc 0%, #bbb 100%)' 
     : 'linear-gradient(135deg, #FF6B35 0%, #f7931e 100%)'};
   color: white;
-  padding: 0.875rem 1.25rem;
-  border-radius: 12px;
-  font-size: 0.9375rem;
+  padding: 0.75rem 0.5rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
   font-weight: 800;
   box-shadow: ${props => props.disabled 
     ? 'none' 
-    : '0 4px 16px rgba(255, 107, 53, 0.35)'};
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    : '0 2px 8px rgba(255, 107, 53, 0.3)'};
+  transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 0.25rem;
   border: none;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.1px;
   position: relative;
   overflow: hidden;
+  white-space: nowrap;
   
   &::before {
     content: '';
@@ -853,7 +947,7 @@ const ExpressCheckoutButton = styled.button`
   
   &:active:not(:disabled) {
     transform: scale(0.97);
-    box-shadow: 0 3px 12px rgba(255, 107, 53, 0.4);
+    box-shadow: 0 2px 6px rgba(255, 107, 53, 0.4);
     
     &::before {
       left: 100%;
@@ -866,33 +960,35 @@ const ExpressCheckoutButton = styled.button`
   }
   
   svg {
-    width: 16px;
-    height: 16px;
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
   }
 `;
 
 const LoginCheckoutButton = styled.button`
-  width: 100%;
+  flex: 1;
   background: ${props => props.disabled 
     ? 'linear-gradient(135deg, #ccc 0%, #bbb 100%)' 
     : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'};
   color: white;
-  padding: 0.875rem 1.25rem;
-  border-radius: 12px;
-  font-size: 0.9375rem;
+  padding: 0.75rem 0.5rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
   font-weight: 800;
   box-shadow: ${props => props.disabled 
     ? 'none' 
-    : '0 4px 16px rgba(102, 126, 234, 0.35)'};
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    : '0 2px 8px rgba(102, 126, 234, 0.3)'};
+  transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 0.25rem;
   border: none;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.1px;
   position: relative;
   overflow: hidden;
+  white-space: nowrap;
   
   &::before {
     content: '';
@@ -907,7 +1003,7 @@ const LoginCheckoutButton = styled.button`
   
   &:active:not(:disabled) {
     transform: scale(0.97);
-    box-shadow: 0 3px 12px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 2px 6px rgba(102, 126, 234, 0.4);
     
     &::before {
       left: 100%;
@@ -920,8 +1016,9 @@ const LoginCheckoutButton = styled.button`
   }
   
   svg {
-    width: 16px;
-    height: 16px;
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
   }
 `;
 

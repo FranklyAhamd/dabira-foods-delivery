@@ -31,9 +31,9 @@ DATABASE_URL="postgresql://username:password@host/database?sslmode=require"
 # JWT Secret
 JWT_SECRET="your-super-secret-jwt-key-change-this-in-production"
 
-# Paystack
-PAYSTACK_SECRET_KEY="sk_test_your_secret_key"
-PAYSTACK_PUBLIC_KEY="pk_test_your_public_key"
+# Monnify credentials are configured in Admin Settings
+# Go to Admin Dashboard > Settings > Monnify Configuration
+# Add your Monnify API Key, Secret Key, and Contract Code
 
 # Server
 PORT=5000
@@ -201,10 +201,11 @@ Authorization: Bearer <your-jwt-token>
 - Check that `DATABASE_URL` is correct in `.env`
 - Verify SSL mode is set to `require` for Neon
 
-### Paystack Integration
-- Get test keys from [Paystack Dashboard](https://dashboard.paystack.com)
-- Use test keys for development
-- Switch to live keys for production
+### Monnify Integration
+- Configure Monnify credentials in Admin Settings
+- Get test credentials from [Monnify Dashboard](https://app.monnify.com)
+- Use test credentials (MK_TEST_ prefix) for development
+- Switch to live credentials (MK_PROD_ prefix) for production
 
 ### CORS Issues
 - Update `MOBILE_APP_URL` and `ADMIN_APP_URL` in `.env`
@@ -214,7 +215,7 @@ Authorization: Bearer <your-jwt-token>
 
 1. Set `NODE_ENV=production`
 2. Use strong `JWT_SECRET`
-3. Switch to Paystack live keys
+3. Switch to Monnify live credentials in Admin Settings
 4. Run database migrations: `npm run prisma:migrate`
 5. Use process manager like PM2
 

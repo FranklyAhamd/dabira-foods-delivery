@@ -7,7 +7,7 @@ This guide will walk you through setting up the entire Dabira Foods food deliver
 - **Node.js** (v16 or higher)
 - **npm** or **yarn**
 - **Neon PostgreSQL account** (free tier available)
-- **Paystack account** (for payment processing)
+- **Monnify account** (for payment processing)
 - **Expo CLI** (for mobile app development)
 
 ## Quick Start
@@ -57,9 +57,9 @@ DATABASE_URL="postgresql://neondb_owner:npg_HNgbsTdcGx53@ep-jolly-firefly-adyxju
 # JWT Secret
 JWT_SECRET="dabira-foods-super-secret-jwt-key-2024"
 
-# Paystack (get from https://dashboard.paystack.com)
-PAYSTACK_SECRET_KEY="sk_test_your_secret_key"
-PAYSTACK_PUBLIC_KEY="pk_test_your_public_key"
+# Monnify credentials are configured in Admin Settings
+# Go to Admin Dashboard > Settings > Monnify Configuration
+# Add your Monnify API Key, Secret Key, and Contract Code
 
 # Server
 PORT=5000
@@ -188,7 +188,7 @@ Login with the admin credentials you created earlier.
 
 ### 3. Payment Testing
 
-Use Paystack test cards:
+Use Monnify test credentials (configured in Admin Settings):
 - **Card Number**: 4084 0840 8408 4081
 - **CVV**: Any 3 digits
 - **Expiry**: Any future date
@@ -220,12 +220,14 @@ const API_URL = 'http://192.168.1.100:5000/api';
 - Ensure `?sslmode=require` is at the end of the URL
 - Verify your Neon database is active
 
-### Issue: Paystack payment not working
+### Issue: Monnify payment not working
 
 **Solution**:
-- Check that Paystack keys are correct in backend `.env`
-- Use test keys for development (start with `sk_test_` and `pk_test_`)
+- Check that Monnify credentials are configured in Admin Settings
+- Verify API Key, Secret Key, and Contract Code are correct
+- Use test credentials (MK_TEST_ prefix) for development
 - Make sure backend is running when initiating payment
+- Check backend console for detailed error messages
 
 ### Issue: Socket.io not connecting
 
@@ -318,7 +320,7 @@ Deploy to:
 Don't forget to:
 - Set production environment variables
 - Use production database
-- Switch to Paystack live keys
+- Switch to Monnify live credentials in Admin Settings
 - Enable HTTPS
 
 ### Mobile App

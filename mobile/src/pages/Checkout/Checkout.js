@@ -23,9 +23,13 @@ const Checkout = () => {
   const [error, setError] = useState('');
   const [isDeliveryOpen, setIsDeliveryOpen] = useState(true);
   const [closedMessage, setClosedMessage] = useState('');
+  const [deliveryLocations, setDeliveryLocations] = useState([]);
+  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [loadingLocations, setLoadingLocations] = useState(true);
 
   useEffect(() => {
     fetchDeliveryStatus();
+    fetchDeliveryLocations();
     
     // Setup Socket.IO connection for real-time updates
     const socketUrl = API_URL.replace('/api', '');
@@ -42,6 +46,24 @@ const Checkout = () => {
       newSocket.disconnect();
     };
   }, []);
+
+  const fetchDeliveryLocations = async () => {
+    try {
+      setLoadingLocations(true);
+      const response = await api.get('/delivery-locations/public');
+      if (response.success && response.data.locations) {
+        setDeliveryLocations(response.data.locations);
+        // Auto-select first location if available
+        if (response.data.locations.length > 0) {
+          setSelectedLocation(response.data.locations[0]);
+        }
+      }
+    } catch (e) {
+      console.error('Error fetching delivery locations:', e);
+    } finally {
+      setLoadingLocations(false);
+    }
+  };
 
   const fetchDeliveryStatus = async () => {
     try {
@@ -68,6 +90,11 @@ const Checkout = () => {
     
     if (!deliveryAddress || !customerName || !customerPhone) {
       setError('Please fill in all required fields');
+      return;
+    }
+
+    if (!selectedLocation) {
+      setError('Please select a delivery location');
       return;
     }
     
@@ -108,7 +135,7 @@ const Checkout = () => {
       
       // Calculate total amount
       const subtotal = getTotalPrice();
-      const deliveryFee = 5.00;
+      const deliveryFee = selectedLocation ? parseFloat(selectedLocation.price) : 0;
       const total = subtotal + deliveryFee;
       
       // Initialize payment with Monnify
@@ -119,7 +146,8 @@ const Checkout = () => {
         customerPhone: customerPhone.trim(),
         items: orderItems,
         deliveryAddress: deliveryAddress.trim(),
-        notes: notes ? notes.trim() : null
+        notes: notes ? notes.trim() : null,
+        deliveryLocationId: selectedLocation.id
       };
       
       console.log('Initializing payment with payload:', paymentPayload);
@@ -168,7 +196,23 @@ const Checkout = () => {
           setError('Invalid payment data. Please check your information and try again.');
         }
       } else {
-        const errorMessage = err.response?.data?.message || err.message || 'Failed to initialize payment. Please try again.';
+        // Show detailed error message from backend
+        const errorData = err.response?.data;
+        let errorMessage = 'Failed to initialize payment. Please try again.';
+        
+        if (errorData?.message) {
+          errorMessage = errorData.message;
+        } else if (errorData?.responseMessage) {
+          errorMessage = errorData.responseMessage;
+        } else if (err.message) {
+          errorMessage = err.message;
+        }
+        
+        // Add details if available in development
+        if (errorData?.details && process.env.NODE_ENV === 'development') {
+          console.error('Payment error details:', errorData.details);
+        }
+        
         setError(errorMessage);
       }
       setLoading(false);
@@ -176,7 +220,7 @@ const Checkout = () => {
   };
 
   const subtotal = getTotalPrice();
-  const deliveryFee = 5.00;
+  const deliveryFee = selectedLocation ? parseFloat(selectedLocation.price) : 0;
   const total = subtotal + deliveryFee;
 
   // Redirect if cart is empty
@@ -233,12 +277,37 @@ const Checkout = () => {
           </FormGroup>
           
           <FormGroup>
+            <Label>Delivery Location *</Label>
+            {loadingLocations ? (
+              <Input type="text" value="Loading locations..." disabled />
+            ) : deliveryLocations.length === 0 ? (
+              <Input type="text" value="No delivery locations available" disabled />
+            ) : (
+              <Select
+                value={selectedLocation?.id || ''}
+                onChange={(e) => {
+                  const location = deliveryLocations.find(loc => loc.id === e.target.value);
+                  setSelectedLocation(location);
+                }}
+                disabled={loading}
+              >
+                <option value="">Select a location</option>
+                {deliveryLocations.map((location) => (
+                  <option key={location.id} value={location.id}>
+                    {location.name} - ₦{parseFloat(location.price).toFixed(2)}
+                  </option>
+                ))}
+              </Select>
+            )}
+          </FormGroup>
+
+          <FormGroup>
             <Label>Delivery Address *</Label>
             <TextArea
               value={deliveryAddress}
               onChange={(e) => setDeliveryAddress(e.target.value)}
-              placeholder="Enter your delivery address"
-              rows="3"
+              placeholder="Enter your detailed delivery address"
+              rows="2"
               disabled={loading}
             />
           </FormGroup>
@@ -249,7 +318,7 @@ const Checkout = () => {
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Any special instructions?"
-              rows="2"
+              rows="1"
               disabled={loading}
             />
           </FormGroup>
@@ -305,30 +374,31 @@ const Checkout = () => {
 const Container = styled.div`
   max-width: 600px;
   margin: 0 auto;
-  padding: 1rem;
-  padding-bottom: 2rem;
+  padding: 0.75rem;
+  padding-bottom: 1.5rem;
 `;
 
 const Title = styled.h1`
-  font-size: 1.75rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: #333;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.75rem;
 `;
 
 const GuestNotice = styled.div`
   background-color: #e3f2fd;
   border: 1px solid #2196f3;
-  border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 1rem;
+  border-radius: 6px;
+  padding: 0.625rem;
+  margin-bottom: 0.75rem;
 `;
 
 const GuestNoticeText = styled.p`
   color: #1565c0;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   margin: 0;
   text-align: center;
+  line-height: 1.4;
 `;
 
 const GuestLink = styled.button`
@@ -339,7 +409,8 @@ const GuestLink = styled.button`
   cursor: pointer;
   font-weight: 600;
   padding: 0;
-  margin-left: 4px;
+  margin-left: 3px;
+  font-size: 0.75rem;
   
   &:hover {
     color: #1565c0;
@@ -349,66 +420,73 @@ const GuestLink = styled.button`
 const ClosedWarning = styled.div`
   background-color: #fff3cd;
   border: 1px solid #ffc107;
-  border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 1rem;
+  border-radius: 6px;
+  padding: 0.625rem;
+  margin-bottom: 0.75rem;
 `;
 
 const ClosedWarningText = styled.p`
   color: #856404;
-  font-size: 0.9375rem;
+  font-size: 0.8125rem;
   text-align: center;
   margin: 0;
   font-weight: 500;
+  line-height: 1.4;
 `;
 
 const ErrorMessage = styled.div`
   background-color: #fee;
   color: #c33;
-  padding: 0.875rem;
-  border-radius: 8px;
-  margin-bottom: 1rem;
-  font-size: 0.875rem;
+  padding: 0.625rem;
+  border-radius: 6px;
+  margin-bottom: 0.75rem;
+  font-size: 0.8125rem;
+  line-height: 1.4;
 `;
 
 const Form = styled.form`
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 0.875rem;
 `;
 
 const Section = styled.div`
   background-color: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 0.875rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 `;
 
 const SectionTitle = styled.h2`
-  font-size: 1.25rem;
+  font-size: 0.9375rem;
   font-weight: 600;
   color: #333;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 `;
 
 const FormGroup = styled.div`
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
 `;
 
 const Label = styled.label`
   display: block;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 500;
   color: #555;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.375rem;
 `;
 
 const Input = styled.input`
   width: 100%;
-  padding: 0.875rem;
+  padding: 0.625rem;
   border: 1px solid #ddd;
   border-radius: 6px;
-  font-size: 1rem;
+  font-size: 0.875rem;
+  box-sizing: border-box;
   
   &:focus {
     outline: none;
@@ -423,12 +501,35 @@ const Input = styled.input`
 
 const TextArea = styled.textarea`
   width: 100%;
-  padding: 0.875rem;
+  padding: 0.625rem;
   border: 1px solid #ddd;
   border-radius: 6px;
-  font-size: 1rem;
+  font-size: 0.875rem;
   font-family: inherit;
   resize: vertical;
+  box-sizing: border-box;
+  line-height: 1.4;
+  
+  &:focus {
+    outline: none;
+    border-color: #FF6B35;
+  }
+  
+  &:disabled {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+  }
+`;
+
+const Select = styled.select`
+  width: 100%;
+  padding: 0.625rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  background-color: white;
+  cursor: pointer;
+  box-sizing: border-box;
   
   &:focus {
     outline: none;
@@ -445,53 +546,69 @@ const OrderItem = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
 `;
 
 const ItemInfo = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.375rem;
+  flex: 1;
+  min-width: 0;
 `;
 
 const ItemQuantity = styled.span`
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: #FF6B35;
+  flex-shrink: 0;
 `;
 
 const ItemName = styled.span`
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 
 const ItemPrice = styled.span`
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   font-family: 'Space Grotesk', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   color: #333;
   letter-spacing: 0.01em;
+  flex-shrink: 0;
+  margin-left: 0.5rem;
 `;
 
 const Divider = styled.div`
   height: 1px;
   background-color: #eee;
-  margin: 0.75rem 0;
+  margin: 0.5rem 0;
 `;
 
 const SummaryRow = styled.div`
   display: flex;
   justify-content: space-between;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.375rem;
+  
+  &:last-of-type {
+    margin-bottom: 0;
+  }
 `;
 
 const SummaryLabel = styled.span`
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   color: #666;
 `;
 
 const SummaryValue = styled.span`
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-family: 'Space Grotesk', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   color: #333;
   letter-spacing: 0.01em;
@@ -501,31 +618,33 @@ const TotalRow = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-top: 0.5rem;
 `;
 
 const TotalLabel = styled.span`
-  font-size: 1.125rem;
+  font-size: 0.9375rem;
   font-weight: 700;
   color: #333;
 `;
 
 const TotalValue = styled.span`
-  font-size: 1.5rem;
+  font-size: 1.125rem;
   font-weight: 700;
   font-family: 'Space Grotesk', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   color: #FF6B35;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
 `;
 
 const SubmitButton = styled.button`
   width: 100%;
   background-color: ${props => props.disabled && !props.$loading ? '#ccc' : '#FF6B35'};
   color: white;
-  padding: 1rem;
+  padding: 0.875rem;
   border-radius: 8px;
-  font-size: 1.125rem;
+  font-size: 1rem;
   font-weight: 600;
   transition: background-color 0.2s;
+  margin-top: 0.5rem;
   
   &:hover:not(:disabled) {
     background-color: #e55a28;

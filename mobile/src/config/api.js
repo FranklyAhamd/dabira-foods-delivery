@@ -37,6 +37,12 @@ const retryRequest = async (config, retryCount = 0) => {
       throw error;
     }
 
+    // Don't retry on 502 errors for payment endpoints (likely configuration issues, not transient)
+    const isPaymentEndpoint = config?.url?.includes('/payment/');
+    if (error.response?.status === 502 && isPaymentEndpoint) {
+      throw error;
+    }
+
     // Retry on network errors or 5xx errors
     if (retryCount < MAX_RETRIES && (
       !error.response || 
@@ -85,8 +91,12 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response.data,
   async (error) => {
-    // Handle authentication errors immediately
-    if (error.response?.status === 401) {
+    // Check if this is a payment endpoint - don't redirect to login for payment 401s
+    // Payment endpoints can return 401 for Monnify authentication failures, not user auth failures
+    const isPaymentEndpoint = error.config?.url?.includes('/payment/');
+    
+    // Handle authentication errors immediately (but not for payment endpoints)
+    if (error.response?.status === 401 && !isPaymentEndpoint) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';
