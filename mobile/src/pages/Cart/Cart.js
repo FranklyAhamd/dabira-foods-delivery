@@ -42,18 +42,28 @@ const Cart = () => {
   const [expandedPlate, setExpandedPlate] = useState(null);
   const [currentPlateIndex, setCurrentPlateIndex] = useState(0);
   
-  // Reset current plate index when cart items change
+  // Reset current plate index when cart items change (but not when just navigating)
   useEffect(() => {
-    if (cartItems.length > 0 && currentPlateIndex >= cartItems.length) {
-      setCurrentPlateIndex(cartItems.length - 1);
-    } else if (cartItems.length === 0) {
+    // Only reset if the index is out of bounds due to cart items being removed
+    // Don't reset if we're just navigating (index is still valid)
+    if (cartItems.length > 0) {
+      // Only reset if index is truly out of bounds
+      if (currentPlateIndex >= cartItems.length) {
+        setCurrentPlateIndex(Math.max(0, cartItems.length - 1));
+      } else if (currentPlateIndex < 0) {
+        // If index is negative, reset to 0
+        setCurrentPlateIndex(0);
+      }
+    } else {
+      // Only reset to 0 if cart is actually empty
       setCurrentPlateIndex(0);
     }
-  }, [cartItems.length, currentPlateIndex]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartItems.length]); // Only depend on cartItems.length to avoid resetting during navigation
   
   // Scroll to selected plate when index changes
   useEffect(() => {
-    if (cartItems.length > 0 && currentPlateIndex < cartItems.length) {
+    if (cartItems.length > 0 && currentPlateIndex >= 0 && currentPlateIndex < cartItems.length) {
       const plateId = cartItems[currentPlateIndex]?.id;
       if (plateId) {
         // Expand the selected plate
@@ -66,6 +76,12 @@ const Cart = () => {
           }
         }, 100);
       }
+    } else if (cartItems.length > 0 && currentPlateIndex >= cartItems.length) {
+      // If index is out of bounds, adjust it
+      setCurrentPlateIndex(cartItems.length - 1);
+    } else if (currentPlateIndex < 0 && cartItems.length > 0) {
+      // If index is negative, reset to 0
+      setCurrentPlateIndex(0);
     }
   }, [currentPlateIndex, cartItems]);
 
@@ -227,18 +243,30 @@ const Cart = () => {
           {cartItems.length > 0 && (
             <PlateNavigation>
               <NavButton 
-                onClick={() => setCurrentPlateIndex(prev => Math.max(0, prev - 1))}
-                disabled={currentPlateIndex === 0}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentPlateIndex(prev => {
+                    const newIndex = Math.max(0, prev - 1);
+                    return newIndex;
+                  });
+                }}
+                disabled={currentPlateIndex === 0 || cartItems.length === 0}
                 aria-label="Previous plate"
               >
                 <FiChevronLeft size={16} />
               </NavButton>
               <PlateNumber>
-                Plate {currentPlateIndex + 1}
+                Plate {Math.min(currentPlateIndex + 1, cartItems.length)}
               </PlateNumber>
               <NavButton 
-                onClick={() => setCurrentPlateIndex(prev => Math.min(cartItems.length - 1, prev + 1))}
-                disabled={currentPlateIndex === cartItems.length - 1}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentPlateIndex(prev => {
+                    const newIndex = Math.min(cartItems.length - 1, prev + 1);
+                    return newIndex;
+                  });
+                }}
+                disabled={currentPlateIndex >= cartItems.length - 1 || cartItems.length === 0}
                 aria-label="Next plate"
               >
                 <FiChevronRight size={16} />

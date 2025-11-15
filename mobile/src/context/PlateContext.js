@@ -13,6 +13,7 @@ export const usePlate = () => {
 export const PlateProvider = ({ children }) => {
   const [currentPlate, setCurrentPlate] = useState(null); // { id, items: [{ menuItem, portions }], plateNumber }
   const [plateNumber, setPlateNumber] = useState(1); // Track plate numbers
+  const [filledPlates, setFilledPlates] = useState([]); // Track plates that have been filled and need to be added to cart
 
   // Calculate total portions for takeaway items in a plate
   const getTakeawayPortionsTotal = (items) => {
@@ -124,33 +125,26 @@ export const PlateProvider = ({ children }) => {
 
     // Check if adding this item would exceed takeaway limit
     if (wouldExceedTakeawayLimit(currentPlate, menuItem, portions)) {
-      // If forceNewPlate is true, create the new plate immediately
-      if (forceNewPlate) {
-        const newPlateNum = plateNumber + 1;
-        setPlateNumber(newPlateNum);
-        const newPlateId = Date.now().toString();
-        const newPlate = {
-          id: newPlateId,
-          items: [
-            {
-              menuItem: { ...menuItem },
-              portions: portions
-            }
-          ],
-          plateNumber: newPlateNum,
-          createdAt: new Date().toISOString()
-        };
-        setCurrentPlate(newPlate);
-        return { plate: newPlate, newPlateCreated: true, filledPlateNumber: currentPlate.plateNumber || 1, needsNewPlate: false };
-      }
-      // Otherwise, return that a new plate is needed (user should confirm)
-      return { 
-        plate: currentPlate, 
-        newPlateCreated: false, 
-        needsNewPlate: true, 
-        pendingItem: { menuItem, portions },
-        filledPlateNumber: currentPlate.plateNumber || 1
+      // Automatically save the filled plate and create a new one (no alert, no confirmation)
+      const filledPlate = { ...currentPlate };
+      setFilledPlates(prev => [...prev, filledPlate]);
+      
+      const newPlateNum = plateNumber + 1;
+      setPlateNumber(newPlateNum);
+      const newPlateId = Date.now().toString();
+      const newPlate = {
+        id: newPlateId,
+        items: [
+          {
+            menuItem: { ...menuItem },
+            portions: portions
+          }
+        ],
+        plateNumber: newPlateNum,
+        createdAt: new Date().toISOString()
       };
+      setCurrentPlate(newPlate);
+      return { plate: newPlate, newPlateCreated: true, filledPlateNumber: filledPlate.plateNumber || 1, needsNewPlate: false };
     }
 
     // Add to existing plate
@@ -236,8 +230,14 @@ export const PlateProvider = ({ children }) => {
   // Clear current plate
   const clearPlate = () => {
     setCurrentPlate(null);
+    setFilledPlates([]); // Also clear filled plates when clearing
     // Reset plate number when clearing (optional - you might want to keep incrementing)
     // setPlateNumber(1);
+  };
+  
+  // Clear filled plates (after adding to cart)
+  const clearFilledPlates = () => {
+    setFilledPlates([]);
   };
 
   // Calculate plate total price
@@ -261,7 +261,9 @@ export const PlateProvider = ({ children }) => {
     plateNumber, // Expose current plate number
     wouldExceedTakeawayLimitOnUpdate, // Expose for use in components
     getPlateMaxPortions, // Expose for use in components
-    isPlateAtMaxCapacity // Expose for use in components
+    isPlateAtMaxCapacity, // Expose for use in components
+    filledPlates, // Expose filled plates array
+    clearFilledPlates // Expose function to clear filled plates
   };
 
   return <PlateContext.Provider value={value}>{children}</PlateContext.Provider>;

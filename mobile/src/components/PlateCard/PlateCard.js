@@ -7,7 +7,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '../../context/ToastContext';
 
 const PlateCard = ({ onAddMoreClick, isDeliveryOpen, isHidden = false }) => {
-  const { currentPlate, removeItemFromPlate, updateItemPortions, clearPlate, getPlateTotal, wouldExceedTakeawayLimitOnUpdate, getPlateMaxPortions, loadPlate, plateNumber } = usePlate();
+  const { currentPlate, removeItemFromPlate, updateItemPortions, clearPlate, getPlateTotal, wouldExceedTakeawayLimitOnUpdate, getPlateMaxPortions, loadPlate, plateNumber, filledPlates, clearFilledPlates } = usePlate();
   const { addPlateToCart, cartItems, removeFromCart } = useCart();
   const navigate = useNavigate();
   const location = useLocation();
@@ -88,12 +88,24 @@ const PlateCard = ({ onAddMoreClick, isDeliveryOpen, isHidden = false }) => {
 
   const handleAddToCart = () => {
     if (!isDeliveryOpen) return;
-    // Always add the currentPlate (which is the one being edited/viewed)
-    addPlateToCart(currentPlate);
+    
+    // Add all filled plates first
+    filledPlates.forEach(plate => {
+      addPlateToCart(plate);
+    });
+    
+    // Then add the current plate
+    if (currentPlate && currentPlate.items.length > 0) {
+      addPlateToCart(currentPlate);
+    }
+    
+    // Clear filled plates and current plate
+    clearFilledPlates();
     clearPlate();
+    
     // If we came from cart page (editing), navigate back to cart
     if (isEditingFromCart) {
-      // Small delay to show the plate was added
+      // Small delay to show the plates were added
       setTimeout(() => {
         navigate('/cart', { replace: true });
       }, 300);
