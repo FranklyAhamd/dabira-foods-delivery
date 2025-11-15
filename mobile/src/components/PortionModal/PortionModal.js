@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { FiX } from 'react-icons/fi';
+import { usePlate } from '../../context/PlateContext';
 
 const PortionModal = ({ isOpen, onClose, menuItem, onConfirm, isDeliveryOpen }) => {
   const [portions, setPortions] = useState(1);
+  const { currentPlate, getPlateMaxPortions } = usePlate();
 
   // Reset portions when modal opens/closes or menuItem changes
   React.useEffect(() => {
@@ -23,10 +25,41 @@ const PortionModal = ({ isOpen, onClose, menuItem, onConfirm, isDeliveryOpen }) 
     }
   };
 
+  // Calculate the maximum portions that can be added based on plate capacity
+  const getMaxAllowedPortions = () => {
+    if (!menuItem.maxPortionsPerTakeaway) {
+      return null; // No limit for non-takeaway items
+    }
+
+    // If there's an existing plate, check remaining capacity
+    if (currentPlate && currentPlate.items.length > 0) {
+      const plateMaxPortions = getPlateMaxPortions(currentPlate, menuItem);
+      if (plateMaxPortions) {
+        // Calculate current takeaway portions in the plate
+        const currentTakeawayPortions = currentPlate.items.reduce((total, item) => {
+          if (item.menuItem.maxPortionsPerTakeaway) {
+            return total + item.portions;
+          }
+          return total;
+        }, 0);
+        
+        // Calculate remaining capacity
+        const remainingCapacity = plateMaxPortions - currentTakeawayPortions;
+        // Return the minimum of item's max and remaining capacity
+        return Math.min(menuItem.maxPortionsPerTakeaway, Math.max(0, remainingCapacity));
+      }
+    }
+
+    // If no existing plate or not a takeaway plate, use item's max
+    return menuItem.maxPortionsPerTakeaway;
+  };
+
+  const maxAllowedPortions = getMaxAllowedPortions();
+
   const handleIncrement = () => {
     setPortions(prev => {
-      // If menuItem has maxPortionsPerTakeaway, don't allow exceeding it
-      if (menuItem.maxPortionsPerTakeaway && prev >= menuItem.maxPortionsPerTakeaway) {
+      // Check against the calculated max (considering plate capacity)
+      if (maxAllowedPortions !== null && prev >= maxAllowedPortions) {
         return prev; // Don't increment if already at or above max
       }
       return prev + 1;
@@ -41,9 +74,9 @@ const PortionModal = ({ isOpen, onClose, menuItem, onConfirm, isDeliveryOpen }) 
     let value = parseInt(e.target.value) || 1;
     // Enforce minimum of 1
     value = Math.max(1, value);
-    // If menuItem has maxPortionsPerTakeaway, cap at that value
-    if (menuItem.maxPortionsPerTakeaway && value > menuItem.maxPortionsPerTakeaway) {
-      value = menuItem.maxPortionsPerTakeaway;
+    // Cap at the calculated max (considering plate capacity)
+    if (maxAllowedPortions !== null && value > maxAllowedPortions) {
+      value = maxAllowedPortions;
     }
     setPortions(value);
   };
@@ -75,13 +108,13 @@ const PortionModal = ({ isOpen, onClose, menuItem, onConfirm, isDeliveryOpen }) 
             <PortionInput
               type="number"
               min="1"
-              max={menuItem.maxPortionsPerTakeaway || undefined}
+              max={maxAllowedPortions || undefined}
               value={String(portions || 1)}
               onChange={handleInputChange}
             />
             <PortionButton 
               onClick={handleIncrement}
-              disabled={menuItem.maxPortionsPerTakeaway && portions >= menuItem.maxPortionsPerTakeaway}
+              disabled={maxAllowedPortions !== null && portions >= maxAllowedPortions}
             >
               +
             </PortionButton>
@@ -95,9 +128,12 @@ const PortionModal = ({ isOpen, onClose, menuItem, onConfirm, isDeliveryOpen }) 
           </TotalValue>
         </TotalSection>
 
-        {menuItem.maxPortionsPerTakeaway && portions >= menuItem.maxPortionsPerTakeaway && (
+        {maxAllowedPortions !== null && portions >= maxAllowedPortions && (
           <WarningText style={{ color: '#10b981', marginBottom: '0.5rem' }}>
-            Maximum {menuItem.maxPortionsPerTakeaway} portions per takeaway plate. Adding more will create a new plate.
+            {currentPlate && currentPlate.items.length > 0 
+              ? `Plate is full! Maximum ${getPlateMaxPortions(currentPlate, menuItem) || menuItem.maxPortionsPerTakeaway} portions allowed per takeaway plate. Adding more will create a new plate.`
+              : `Maximum ${menuItem.maxPortionsPerTakeaway} portions per takeaway plate. Adding more will create a new plate.`
+            }
           </WarningText>
         )}
 

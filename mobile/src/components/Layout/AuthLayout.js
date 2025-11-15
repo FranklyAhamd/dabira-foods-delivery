@@ -1,7 +1,43 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import styled from 'styled-components';
+import { API_URL } from '../../config/api';
 
 const AuthLayout = ({ children }) => {
+  // Wake up server when auth pages load (backup to App-level wake-up)
+  useEffect(() => {
+    const wakeUpServer = async () => {
+      const healthCheckUrl = API_URL.replace('/api', '/api/health');
+      
+      try {
+        // Use fetch with timeout using AbortController for better compatibility
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        
+        const response = await fetch(healthCheckUrl, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          signal: controller.signal,
+        });
+        
+        clearTimeout(timeoutId);
+        if (response.ok) {
+          return; // Success
+        }
+      } catch (error) {
+        // Silently fail - this is just a backup wake-up call
+      }
+    };
+
+    // Small delay to avoid race condition with App-level wake-up
+    const timeoutId = setTimeout(() => {
+      wakeUpServer();
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, []);
+
   return (
     <Container>
       <Content>

@@ -1,25 +1,94 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { FiPlus, FiTrash2, FiShoppingCart } from 'react-icons/fi';
+import { FiPlus, FiTrash2, FiShoppingCart, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { usePlate } from '../../context/PlateContext';
 import { useCart } from '../../context/CartContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '../../context/ToastContext';
 
 const PlateCard = ({ onAddMoreClick, isDeliveryOpen, isHidden = false }) => {
-  const { currentPlate, removeItemFromPlate, updateItemPortions, clearPlate, getPlateTotal, wouldExceedTakeawayLimitOnUpdate } = usePlate();
-  const { addPlateToCart } = useCart();
+  const { currentPlate, removeItemFromPlate, updateItemPortions, clearPlate, getPlateTotal, wouldExceedTakeawayLimitOnUpdate, getPlateMaxPortions, loadPlate, plateNumber } = usePlate();
+  const { addPlateToCart, cartItems, removeFromCart } = useCart();
   const navigate = useNavigate();
   const location = useLocation();
   const { warning } = useToast();
   const isEditingFromCart = location.state?.editingPlate;
+  
+  // Track original cart length to calculate total plates correctly
+  // (cartItems.length changes when we remove plates for editing)
+  const [originalCartLength, setOriginalCartLength] = useState(cartItems.length);
+  
+  // Update original cart length when cart items change (but not when we're just editing)
+  useEffect(() => {
+    // Only update if the change is not from navigation (i.e., actual cart changes)
+    if (cartItems.length !== originalCartLength) {
+      // If cart length increased, it's a real addition
+      if (cartItems.length > originalCartLength) {
+        setOriginalCartLength(cartItems.length);
+      }
+      // If cart length decreased by 1 and we're viewing a plate, it might be from navigation
+      // Otherwise, update the original length
+      else if (cartItems.length < originalCartLength - 1) {
+        setOriginalCartLength(cartItems.length);
+      }
+    }
+  }, [cartItems.length, originalCartLength]);
+  
+  // Calculate total plates: existing in cart + current plate being built
+  const totalPlates = originalCartLength + (currentPlate && currentPlate.items.length > 0 ? 1 : 0);
+  const currentPlateIndex = originalCartLength; // Current plate is always the last one (being built)
+  const [viewingPlateIndex, setViewingPlateIndex] = useState(currentPlateIndex);
+  
+  // Reset viewing index when current plate changes
+  useEffect(() => {
+    if (currentPlate && currentPlate.items.length > 0) {
+      setViewingPlateIndex(originalCartLength);
+    }
+  }, [currentPlate, originalCartLength]);
 
   if (!currentPlate || currentPlate.items.length === 0) {
     return null;
   }
+  
+  const isViewingCurrentPlate = viewingPlateIndex === originalCartLength;
+  
+  // Handle navigation
+  const handlePreviousPlate = () => {
+    if (viewingPlateIndex > 0) {
+      const newIndex = viewingPlateIndex - 1;
+      setViewingPlateIndex(newIndex);
+      // Load the plate from cart into currentPlate for editing
+      if (newIndex < cartItems.length) {
+        const plateToLoad = cartItems[newIndex];
+        if (plateToLoad) {
+          // Remove from cart temporarily (it will be added back when saved)
+          removeFromCart(plateToLoad.id);
+          loadPlate(plateToLoad);
+        }
+      }
+    }
+  };
+  
+  const handleNextPlate = () => {
+    if (viewingPlateIndex < totalPlates - 1) {
+      const newIndex = viewingPlateIndex + 1;
+      setViewingPlateIndex(newIndex);
+      // If navigating to a plate from cart, load it
+      if (newIndex < cartItems.length) {
+        const plateToLoad = cartItems[newIndex];
+        if (plateToLoad) {
+          // Remove from cart temporarily (it will be added back when saved)
+          removeFromCart(plateToLoad.id);
+          loadPlate(plateToLoad);
+        }
+      }
+      // If navigating to current plate (the one being built), it's already loaded
+    }
+  };
 
   const handleAddToCart = () => {
     if (!isDeliveryOpen) return;
+    // Always add the currentPlate (which is the one being edited/viewed)
     addPlateToCart(currentPlate);
     clearPlate();
     // If we came from cart page (editing), navigate back to cart
@@ -32,6 +101,7 @@ const PlateCard = ({ onAddMoreClick, isDeliveryOpen, isHidden = false }) => {
   };
 
   const handleRemoveItem = (menuItemId) => {
+    // Always remove from currentPlate (which is loaded when viewing any plate)
     removeItemFromPlate(menuItemId);
   };
 
@@ -41,12 +111,12 @@ const PlateCard = ({ onAddMoreClick, isDeliveryOpen, isHidden = false }) => {
       return;
     }
 
+    // Use currentPlate for limit checking (it's the one being edited)
     // Check if this update would exceed the limit
     if (wouldExceedTakeawayLimitOnUpdate(currentPlate, menuItemId, newPortions)) {
-      const item = currentPlate.items.find(item => item.menuItem.id === menuItemId);
-      if (item && item.menuItem.maxPortionsPerTakeaway) {
-        const maxPortions = item.menuItem.maxPortionsPerTakeaway;
-        warning(`Plate ${currentPlate.plateNumber || 1} is full! Maximum ${maxPortions} portions allowed. You can add extra items like drinks, or start a new plate.`);
+      const plateMaxPortions = getPlateMaxPortions(currentPlate);
+      if (plateMaxPortions) {
+        warning(`Plate ${currentPlate.plateNumber || viewingPlateIndex + 1} is full! Maximum ${plateMaxPortions} portions allowed per takeaway plate. You can add extra items like drinks, or start a new plate.`);
         return; // Don't update if it would exceed
       }
     }
@@ -61,8 +131,35 @@ const PlateCard = ({ onAddMoreClick, isDeliveryOpen, isHidden = false }) => {
   return (
     <CardContainer $isHidden={isHidden}>
       <CardHeader>
-        <CardTitle>{isEditingFromCart ? 'Editing Plate' : 'Your Plate'}</CardTitle>
-        <ClearButton onClick={clearPlate}>Clear</ClearButton>
+        <CardTitleLeft>
+          <CardTitle>{isEditingFromCart ? 'Editing Plate' : 'Your Plate'}</CardTitle>
+        </CardTitleLeft>
+        <CardHeaderCenter>
+          {totalPlates > 1 && (
+            <PlateNavigation>
+              <NavButton 
+                onClick={handlePreviousPlate}
+                disabled={viewingPlateIndex === 0}
+                aria-label="Previous plate"
+              >
+                <FiChevronLeft size={14} />
+              </NavButton>
+              <PlateNumber>
+                Plate {viewingPlateIndex + 1}
+              </PlateNumber>
+              <NavButton 
+                onClick={handleNextPlate}
+                disabled={viewingPlateIndex === totalPlates - 1}
+                aria-label="Next plate"
+              >
+                <FiChevronRight size={14} />
+              </NavButton>
+            </PlateNavigation>
+          )}
+        </CardHeaderCenter>
+        <CardTitleRight>
+          <ClearButton onClick={clearPlate}>Clear</ClearButton>
+        </CardTitleRight>
       </CardHeader>
 
       <ItemsList>
@@ -199,6 +296,27 @@ const CardHeader = styled.div`
   padding: 0.5rem 0.75rem;
   border-bottom: 1px solid #2a2a2a;
   background: linear-gradient(135deg, #121212 0%, #1a1a1a 100%);
+  gap: 0.5rem;
+`;
+
+const CardTitleLeft = styled.div`
+  flex: 1;
+  display: flex;
+  align-items: center;
+`;
+
+const CardHeaderCenter = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+`;
+
+const CardTitleRight = styled.div`
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 `;
 
 const CardTitle = styled.h3`
@@ -206,6 +324,54 @@ const CardTitle = styled.h3`
   font-weight: 700;
   color: #ffffff;
   letter-spacing: -0.01em;
+`;
+
+const PlateNavigation = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.2rem 0.4rem;
+  border-radius: 6px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+`;
+
+const NavButton = styled.button`
+  background: ${props => props.disabled ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.1)'};
+  border: none;
+  color: ${props => props.disabled ? 'rgba(255, 255, 255, 0.3)' : '#ffffff'};
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
+  transition: all 0.2s;
+  
+  &:active:not(:disabled) {
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(0.9);
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+  }
+  
+  svg {
+    width: 12px;
+    height: 12px;
+  }
+`;
+
+const PlateNumber = styled.span`
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #ffffff;
+  min-width: 50px;
+  text-align: center;
+  letter-spacing: 0.01em;
 `;
 
 const ClearButton = styled.button`

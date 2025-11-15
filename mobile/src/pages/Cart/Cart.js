@@ -15,7 +15,9 @@ import {
   FiPlus, 
   FiArrowRight,
   FiEdit,
-  FiMenu
+  FiMenu,
+  FiChevronLeft,
+  FiChevronRight
 } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 
@@ -38,6 +40,34 @@ const Cart = () => {
   const [isDeliveryOpen, setIsDeliveryOpen] = useState(true);
   const [closedMessage, setClosedMessage] = useState('');
   const [expandedPlate, setExpandedPlate] = useState(null);
+  const [currentPlateIndex, setCurrentPlateIndex] = useState(0);
+  
+  // Reset current plate index when cart items change
+  useEffect(() => {
+    if (cartItems.length > 0 && currentPlateIndex >= cartItems.length) {
+      setCurrentPlateIndex(cartItems.length - 1);
+    } else if (cartItems.length === 0) {
+      setCurrentPlateIndex(0);
+    }
+  }, [cartItems.length, currentPlateIndex]);
+  
+  // Scroll to selected plate when index changes
+  useEffect(() => {
+    if (cartItems.length > 0 && currentPlateIndex < cartItems.length) {
+      const plateId = cartItems[currentPlateIndex]?.id;
+      if (plateId) {
+        // Expand the selected plate
+        setExpandedPlate(plateId);
+        // Scroll to the plate element
+        setTimeout(() => {
+          const plateElement = document.querySelector(`[data-plate-id="${plateId}"]`);
+          if (plateElement) {
+            plateElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 100);
+      }
+    }
+  }, [currentPlateIndex, cartItems]);
 
   // Format number with commas (only for integer part, not decimals)
   const formatNumber = (num) => {
@@ -191,19 +221,33 @@ const Cart = () => {
       />
       <Header>
         <HeaderLeft>
-          <Title>My Cart</Title>
-          <ClearButton onClick={clearCart}>Clear All</ClearButton>
+          <Title>Your Plate</Title>
         </HeaderLeft>
+        <HeaderCenter>
+          {cartItems.length > 0 && (
+            <PlateNavigation>
+              <NavButton 
+                onClick={() => setCurrentPlateIndex(prev => Math.max(0, prev - 1))}
+                disabled={currentPlateIndex === 0}
+                aria-label="Previous plate"
+              >
+                <FiChevronLeft size={16} />
+              </NavButton>
+              <PlateNumber>
+                Plate {currentPlateIndex + 1}
+              </PlateNumber>
+              <NavButton 
+                onClick={() => setCurrentPlateIndex(prev => Math.min(cartItems.length - 1, prev + 1))}
+                disabled={currentPlateIndex === cartItems.length - 1}
+                aria-label="Next plate"
+              >
+                <FiChevronRight size={16} />
+              </NavButton>
+            </PlateNavigation>
+          )}
+        </HeaderCenter>
         <HeaderRight>
-          <CartIconLink to="/cart">
-            <FiShoppingCart size={20} />
-            {cartItems.length > 0 && (
-              <CartBadge>{cartItems.length}</CartBadge>
-            )}
-          </CartIconLink>
-          <MenuIconButton onClick={() => {/* Menu handler will be in MainLayout */}}>
-            <FiMenu size={20} />
-          </MenuIconButton>
+          <ClearButton onClick={clearCart}>Clear</ClearButton>
         </HeaderRight>
       </Header>
       
@@ -217,7 +261,7 @@ const Cart = () => {
           const totalItems = plate.items.reduce((sum, item) => sum + item.portions, 0);
           
           return (
-            <PlateWrapper key={plate.id}>
+            <PlateWrapper key={plate.id} data-plate-id={plate.id}>
               <CompactPlateCard 
                 onClick={() => setExpandedPlate(isExpanded ? null : plate.id)}
                 $expanded={isExpanded}
@@ -399,12 +443,71 @@ const HeaderLeft = styled.div`
   z-index: 1;
 `;
 
+const HeaderCenter = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  position: relative;
+  z-index: 1;
+`;
+
 const HeaderRight = styled.div`
   display: flex;
   align-items: center;
   gap: 0.75rem;
   position: relative;
   z-index: 1;
+  flex: 1;
+  justify-content: flex-end;
+`;
+
+const PlateNavigation = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+`;
+
+const NavButton = styled.button`
+  background: ${props => props.disabled ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.1)'};
+  border: none;
+  color: ${props => props.disabled ? 'rgba(255, 255, 255, 0.3)' : '#ffffff'};
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
+  transition: all 0.2s;
+  
+  &:active:not(:disabled) {
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(0.9);
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+  }
+  
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+`;
+
+const PlateNumber = styled.span`
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #ffffff;
+  min-width: 60px;
+  text-align: center;
+  letter-spacing: 0.01em;
 `;
 
 const Title = styled.h2`

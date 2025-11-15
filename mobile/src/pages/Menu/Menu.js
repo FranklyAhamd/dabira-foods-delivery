@@ -10,6 +10,7 @@ import AnimatedProductCard from '../../components/AnimatedProductCard/AnimatedPr
 import PortionModal from '../../components/PortionModal/PortionModal';
 import PlateCard from '../../components/PlateCard/PlateCard';
 import PlateFilledAlert from '../../components/PlateFilledAlert/PlateFilledAlert';
+import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
 import { FiSearch, FiPlus, FiRefreshCw } from 'react-icons/fi';
 
 const Menu = () => {
@@ -23,13 +24,16 @@ const Menu = () => {
   const [error, setError] = useState(null);
   
   const navigate = useNavigate();
-  const { warning } = useToast();
-  const { createPlate, addItemToPlate, currentPlate } = usePlate();
+  const { warning, success } = useToast();
+  const { createPlate, addItemToPlate, currentPlate, getPlateMaxPortions, isPlateAtMaxCapacity, clearPlate } = usePlate();
+  const { addPlateToCart } = useCart();
   const [selectedItem, setSelectedItem] = useState(null);
   const [showPortionModal, setShowPortionModal] = useState(false);
   const [isPlateCardHidden, setIsPlateCardHidden] = useState(false);
   const [showPlateFilledAlert, setShowPlateFilledAlert] = useState(false);
   const [filledPlateNumber, setFilledPlateNumber] = useState(1);
+  const [showNewPlateConfirm, setShowNewPlateConfirm] = useState(false);
+  const [pendingItem, setPendingItem] = useState(null);
 
   useEffect(() => {
     fetchDeliveryStatus();
@@ -142,6 +146,26 @@ const Menu = () => {
       return;
     }
     
+    // Check if current plate already has takeaway items
+    const hasExistingTakeawayItems = currentPlate && currentPlate.items.some(
+      plateItem => plateItem.menuItem.maxPortionsPerTakeaway
+    );
+    
+    // If item has maxPortionsPerTakeaway = 1 and plate already has other takeaway items, prompt for new plate
+    if (hasExistingTakeawayItems && item.maxPortionsPerTakeaway === 1) {
+      setSelectedItem(item);
+      setShowNewPlateConfirm(true);
+      return; // Don't open portion modal yet, wait for confirmation
+    }
+    
+    // Check if current plate is full and the new item is a takeaway item
+    if (currentPlate && isPlateAtMaxCapacity(currentPlate) && item.maxPortionsPerTakeaway) {
+      // Plate is full and user is trying to add another takeaway item
+      setSelectedItem(item);
+      setShowNewPlateConfirm(true);
+      return; // Don't open portion modal yet, wait for confirmation
+    }
+    
     setSelectedItem(item);
     setShowPortionModal(true);
   };
@@ -149,15 +173,23 @@ const Menu = () => {
   const handlePortionConfirm = (menuItem, portions) => {
     let result;
     if (currentPlate) {
-      // Add to existing plate - this may create a new plate if limit is exceeded
-      result = addItemToPlate(menuItem, portions);
+      // Add to existing plate - this may need a new plate if limit is exceeded
+      result = addItemToPlate(menuItem, portions, false);
     } else {
       // Create new plate
       const newPlate = createPlate(menuItem, portions);
-      result = { plate: newPlate, newPlateCreated: false };
+      result = { plate: newPlate, newPlateCreated: false, needsNewPlate: false };
     }
     
-    // Check if a new plate was created (takeaway limit exceeded)
+    // Check if a new plate is needed (user should confirm)
+    if (result.needsNewPlate) {
+      setPendingItem({ menuItem, portions });
+      setFilledPlateNumber(result.filledPlateNumber);
+      setShowNewPlateConfirm(true);
+      return; // Don't close modal yet, wait for confirmation
+    }
+    
+    // Check if a new plate was created (shouldn't happen with new logic, but keep for safety)
     if (result.newPlateCreated) {
       setFilledPlateNumber(result.filledPlateNumber);
       setShowPlateFilledAlert(true);
@@ -166,6 +198,40 @@ const Menu = () => {
     // Show the PlateCard again when an item is added
     setIsPlateCardHidden(false);
     // Modal will close automatically via onClose callback in handleConfirm
+  };
+
+  const handleConfirmNewPlate = () => {
+    // Save current full plate to cart before creating new one
+    if (currentPlate && isPlateAtMaxCapacity(currentPlate)) {
+      addPlateToCart(currentPlate);
+      success(`Plate ${currentPlate.plateNumber || 1} saved to cart!`);
+      clearPlate();
+    }
+    
+    // If there's a pending item (from portion modal), add it to new plate
+    if (pendingItem) {
+      const result = addItemToPlate(pendingItem.menuItem, pendingItem.portions, true);
+      
+      if (result.newPlateCreated) {
+        setFilledPlateNumber(result.filledPlateNumber);
+        setShowPlateFilledAlert(true);
+      }
+      
+      setPendingItem(null);
+    } else if (selectedItem) {
+      // If no pending item but we have a selected item, open portion modal
+      setShowPortionModal(true);
+    }
+    
+    setIsPlateCardHidden(false);
+    setShowNewPlateConfirm(false);
+  };
+
+  const handleCancelNewPlate = () => {
+    setPendingItem(null);
+    setSelectedItem(null);
+    setShowNewPlateConfirm(false);
+    // Don't open portion modal if user cancels
   };
 
   // Check if we're editing a plate from cart
@@ -385,6 +451,33 @@ const Menu = () => {
         isOpen={showPlateFilledAlert}
         onClose={() => setShowPlateFilledAlert(false)}
         plateNumber={filledPlateNumber}
+      />
+
+      {/* New Plate Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showNewPlateConfirm}
+        onClose={handleCancelNewPlate}
+        onConfirm={handleConfirmNewPlate}
+        title="New Plate Required"
+        message={
+          (() => {
+            const hasExistingTakeaway = currentPlate && currentPlate.items.some(
+              plateItem => plateItem.menuItem.maxPortionsPerTakeaway
+            );
+            const isMaxOneItem = selectedItem?.maxPortionsPerTakeaway === 1;
+            
+            if (hasExistingTakeaway && isMaxOneItem) {
+              return `${selectedItem?.name || 'This item'} can only have 1 portion per takeaway plate and should be in its own plate. Your current plate will be saved to cart. Would you like to start a new plate with ${selectedItem?.name || 'this item'}?`;
+            } else if (currentPlate && isPlateAtMaxCapacity(currentPlate)) {
+              return currentPlate && getPlateMaxPortions(currentPlate)
+                ? `Your current plate has reached its maximum capacity of ${getPlateMaxPortions(currentPlate)} portions. Your current plate will be saved to cart. Would you like to start a new plate with ${selectedItem?.name || 'this item'}?`
+                : `Your current plate is full. Your current plate will be saved to cart. Would you like to start a new plate with ${selectedItem?.name || 'this item'}?`;
+            }
+            return `Your current plate will be saved to cart. Would you like to start a new plate with ${selectedItem?.name || 'this item'}?`;
+          })()
+        }
+        confirmText="Start New Plate"
+        cancelText="Cancel"
       />
     </Container>
   );

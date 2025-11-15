@@ -25,13 +25,48 @@ export const PlateProvider = ({ children }) => {
     }, 0);
   };
 
-  // Check if adding this item would exceed takeaway limit
-  const wouldExceedTakeawayLimit = (plate, menuItem, portions) => {
-    if (!menuItem.maxPortionsPerTakeaway) return false;
+  // Get the shared maxPortionsPerTakeaway from existing takeaway items in the plate
+  // All takeaway items should share the same max capacity
+  const getPlateMaxPortions = (plate, newMenuItem = null) => {
+    // First, try to get max from existing takeaway items in the plate
+    const existingTakeawayItem = plate.items.find(item => item.menuItem.maxPortionsPerTakeaway);
+    if (existingTakeawayItem) {
+      return existingTakeawayItem.menuItem.maxPortionsPerTakeaway;
+    }
+    // If no existing takeaway items, use the new item's max (if it's a takeaway item)
+    if (newMenuItem && newMenuItem.maxPortionsPerTakeaway) {
+      return newMenuItem.maxPortionsPerTakeaway;
+    }
+    return null; // Not a takeaway plate
+  };
+
+  // Check if the current plate is at maximum capacity
+  const isPlateAtMaxCapacity = (plate) => {
+    if (!plate || !plate.items || plate.items.length === 0) {
+      return false;
+    }
+    
+    const plateMaxPortions = getPlateMaxPortions(plate);
+    if (!plateMaxPortions) {
+      return false; // Not a takeaway plate, no max capacity
+    }
     
     const currentTakeawayPortions = getTakeawayPortionsTotal(plate.items);
-    // Use >= to prevent exceeding the limit (if limit is 6, 6 is the max, 7 would exceed)
-    return (currentTakeawayPortions + portions) > menuItem.maxPortionsPerTakeaway;
+    return currentTakeawayPortions >= plateMaxPortions;
+  };
+
+  // Check if adding this item would exceed takeaway limit
+  const wouldExceedTakeawayLimit = (plate, menuItem, portions) => {
+    // If the new item is not a takeaway item, no limit check needed
+    if (!menuItem.maxPortionsPerTakeaway) return false;
+    
+    // Get the shared max capacity for this plate
+    const plateMaxPortions = getPlateMaxPortions(plate, menuItem);
+    if (!plateMaxPortions) return false;
+    
+    const currentTakeawayPortions = getTakeawayPortionsTotal(plate.items);
+    // Check if adding new portions would exceed the plate's shared max capacity
+    return (currentTakeawayPortions + portions) > plateMaxPortions;
   };
 
   // Check if updating portions of an existing item would exceed takeaway limit
@@ -42,6 +77,10 @@ export const PlateProvider = ({ children }) => {
       return false; // Not a takeaway item, no limit
     }
 
+    // Get the shared max capacity for this plate
+    const plateMaxPortions = getPlateMaxPortions(plate);
+    if (!plateMaxPortions) return false;
+
     // Calculate current total portions of all takeaway items
     const currentTakeawayPortions = getTakeawayPortionsTotal(plate.items);
     // Subtract the old portions of the item being updated
@@ -49,8 +88,8 @@ export const PlateProvider = ({ children }) => {
     // Add the new portions
     const newTotal = otherTakeawayPortions + newPortions;
     
-    // Check if new total would exceed the limit
-    return newTotal > itemBeingUpdated.menuItem.maxPortionsPerTakeaway;
+    // Check if new total would exceed the plate's shared max capacity
+    return newTotal > plateMaxPortions;
   };
 
   // Create a new plate with first item
@@ -77,31 +116,41 @@ export const PlateProvider = ({ children }) => {
     return newPlate;
   };
 
-  // Add item to current plate (returns info about whether a new plate was created)
-  const addItemToPlate = (menuItem, portions) => {
+  // Add item to current plate (returns info about whether a new plate was created or needed)
+  const addItemToPlate = (menuItem, portions, forceNewPlate = false) => {
     if (!currentPlate) {
-      return { plate: createPlate(menuItem, portions), newPlateCreated: false };
+      return { plate: createPlate(menuItem, portions), newPlateCreated: false, needsNewPlate: false };
     }
 
     // Check if adding this item would exceed takeaway limit
     if (wouldExceedTakeawayLimit(currentPlate, menuItem, portions)) {
-      // Create a new plate
-      const newPlateNum = plateNumber + 1;
-      setPlateNumber(newPlateNum);
-      const newPlateId = Date.now().toString();
-      const newPlate = {
-        id: newPlateId,
-        items: [
-          {
-            menuItem: { ...menuItem },
-            portions: portions
-          }
-        ],
-        plateNumber: newPlateNum,
-        createdAt: new Date().toISOString()
+      // If forceNewPlate is true, create the new plate immediately
+      if (forceNewPlate) {
+        const newPlateNum = plateNumber + 1;
+        setPlateNumber(newPlateNum);
+        const newPlateId = Date.now().toString();
+        const newPlate = {
+          id: newPlateId,
+          items: [
+            {
+              menuItem: { ...menuItem },
+              portions: portions
+            }
+          ],
+          plateNumber: newPlateNum,
+          createdAt: new Date().toISOString()
+        };
+        setCurrentPlate(newPlate);
+        return { plate: newPlate, newPlateCreated: true, filledPlateNumber: currentPlate.plateNumber || 1, needsNewPlate: false };
+      }
+      // Otherwise, return that a new plate is needed (user should confirm)
+      return { 
+        plate: currentPlate, 
+        newPlateCreated: false, 
+        needsNewPlate: true, 
+        pendingItem: { menuItem, portions },
+        filledPlateNumber: currentPlate.plateNumber || 1
       };
-      setCurrentPlate(newPlate);
-      return { plate: newPlate, newPlateCreated: true, filledPlateNumber: currentPlate.plateNumber || 1 };
     }
 
     // Add to existing plate
@@ -115,7 +164,7 @@ export const PlateProvider = ({ children }) => {
         }
       ]
     }));
-    return { plate: currentPlate, newPlateCreated: false };
+    return { plate: currentPlate, newPlateCreated: false, needsNewPlate: false };
   };
 
   // Remove item from current plate
@@ -137,23 +186,25 @@ export const PlateProvider = ({ children }) => {
       // Find the item to get its maxPortionsPerTakeaway
       const item = currentPlate.items.find(item => item.menuItem.id === menuItemId);
       if (item && item.menuItem.maxPortionsPerTakeaway) {
-        // Cap the portions at the maximum allowed
-        const maxPortions = item.menuItem.maxPortionsPerTakeaway;
-        const currentTakeawayPortions = getTakeawayPortionsTotal(currentPlate.items);
-        const otherTakeawayPortions = currentTakeawayPortions - item.portions;
-        const maxAllowedForThisItem = maxPortions - otherTakeawayPortions;
-        
-        // If maxAllowedForThisItem is <= 0, the plate is already full with other items
-        if (maxAllowedForThisItem <= 0) {
-          return { 
-            success: false, 
-            limitExceeded: true, 
-            message: `Plate ${currentPlate.plateNumber || 1} is full. Maximum ${maxPortions} portions allowed.` 
-          };
+        // Get the shared max capacity for this plate
+        const plateMaxPortions = getPlateMaxPortions(currentPlate);
+        if (plateMaxPortions) {
+          const currentTakeawayPortions = getTakeawayPortionsTotal(currentPlate.items);
+          const otherTakeawayPortions = currentTakeawayPortions - item.portions;
+          const maxAllowedForThisItem = plateMaxPortions - otherTakeawayPortions;
+          
+          // If maxAllowedForThisItem is <= 0, the plate is already full with other items
+          if (maxAllowedForThisItem <= 0) {
+            return { 
+              success: false, 
+              limitExceeded: true, 
+              message: `Plate ${currentPlate.plateNumber || 1} is full. Maximum ${plateMaxPortions} portions allowed per takeaway plate.` 
+            };
+          }
+          
+          // Cap at the maximum allowed
+          portions = maxAllowedForThisItem;
         }
-        
-        // Cap at the maximum allowed
-        portions = maxAllowedForThisItem;
       }
     }
 
@@ -208,7 +259,9 @@ export const PlateProvider = ({ children }) => {
     clearPlate,
     getPlateTotal,
     plateNumber, // Expose current plate number
-    wouldExceedTakeawayLimitOnUpdate // Expose for use in components
+    wouldExceedTakeawayLimitOnUpdate, // Expose for use in components
+    getPlateMaxPortions, // Expose for use in components
+    isPlateAtMaxCapacity // Expose for use in components
   };
 
   return <PlateContext.Provider value={value}>{children}</PlateContext.Provider>;

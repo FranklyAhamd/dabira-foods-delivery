@@ -37,14 +37,14 @@ const IconContainer = styled.div`
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background-color: #fef3c7;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   
   svg {
-    color: #f59e0b;
+    color: #667eea;
   }
 `;
 
@@ -98,11 +98,13 @@ const CancelButton = styled(Button)`
 `;
 
 const ConfirmButton = styled(Button)`
-  background-color: #ef4444;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
   
-  &:hover {
-    background-color: #dc2626;
+  &:active {
+    transform: scale(0.98);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
   }
 `;
 

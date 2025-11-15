@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
-import api from '../../config/api';
+import api, { API_URL } from '../../config/api';
 import { 
   FiHome, 
   FiShoppingCart, 
@@ -20,22 +20,51 @@ const MainLayout = () => {
   const { isAuthenticated } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // Wake up the server when MainLayout mounts
-  // This ensures the server is awake regardless of which page the user lands on
+  // Additional server wake-up when MainLayout mounts
+  // This provides a backup wake-up call in case the App-level one didn't complete
   useEffect(() => {
     const wakeUpServer = async () => {
-      try {
-        // Make a lightweight API call to wake up the Railway server
-        // Using /settings endpoint as it's lightweight and doesn't require auth
-        await api.get('/settings');
-      } catch (error) {
-        // Silently fail - this is just a wake-up call
-        // The actual pages will handle their own API calls and errors
-        console.log('Server wake-up call completed');
+      const healthCheckUrl = API_URL.replace('/api', '/api/health');
+      const maxRetries = 3;
+      
+      for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+          // Use fetch with AbortController for timeout
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000);
+          
+          const response = await fetch(healthCheckUrl, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            signal: controller.signal,
+          });
+
+          clearTimeout(timeoutId);
+          
+          if (response.ok) {
+            return; // Success
+          }
+        } catch (error) {
+          // If last attempt, just return silently
+          if (attempt === maxRetries - 1) {
+            return;
+          }
+          
+          // Wait before retry: 500ms, 1s, 2s
+          const delay = 500 * Math.pow(2, attempt);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
       }
     };
 
-    wakeUpServer();
+    // Small delay to avoid race condition with App-level wake-up
+    const timeoutId = setTimeout(() => {
+      wakeUpServer();
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
   }, []);
 
   const isActive = (path) => {
